@@ -1,0 +1,93 @@
+/* landing.css */
+
+.landing-main {
+    background: #B7CECE;
+    padding: 32px;
+
+      /* Center everything */
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+h1 {
+    font-size: 48px;
+    margin-bottom: 0px;
+    /*center*/
+    text-align: center;
+}
+
+.intro-text {
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+    font-size: 20px;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/*search*/
+input {
+    width: 700px;
+    padding: 15px;
+    font-size: 20px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+input:focus {
+    outline: none;
+    border-color: #d8cfcf;
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 20px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #1C0F13;
+    color: #F0EFF4;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #333;
+}
+
+button:active {
+    background-color: #555;
+}
+
+
+.nav-search {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+
+.nav-search-input {
+    width: 230px;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-top: auto;
+}
+
+.nav-search-input:focus {
+    outline: none;
+    border-color: #d8cfcf;
+}
+
+.nav-search-btn {
+    padding: 8px 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: #1C0F13;
+    color: #F0EFF4;
+    cursor: pointer;
+}
+

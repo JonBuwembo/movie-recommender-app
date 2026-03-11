@@ -1,0 +1,45 @@
+.movie-card {
+    width: 100%;
+    max-width: 200px; /*cards control width */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    background-color: #fff;
+}
+
+.movie-card:hover {
+    transform: translateY(-5px);
+    transform: scale(1.05);
+}
+
+.movie-poster {
+    width: 100%;
+    height: 300px;
+    object-fit: cover; /*no distortion when image covers area*/
+    display: block;
+}
+
+.movie-info {
+    padding: 12px;
+}
+
+.movie-title {
+    font-size: 1rem;
+    margin: 0 0 4px 0;
+    white-space: nowrap; /*prevent title from wrapping to multiple lines*/
+    overflow: hidden; /*hide overflow text*/
+    text-overflow: ellipsis; /*add "..." for overflow text*/
+}
+
+.movie-year {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+}
+
+.movie-genre {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 4px;
+}

@@ -1,0 +1,19 @@
+
+.movies-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /*responsive grid with min width of 200px*/
+    gap: 20px; /*space between cards*/
+    padding: 20px;
+    justify-content: center; /*center grid items horizontally*/
+}
+
+/*means if max width is */
+@media (max-width: 600px) {
+    .movies-display {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /*adjust min width for smaller screens*/
+    }
+
+    .movie-card {
+        max-width: 150px; /*adjust card width for smaller screens*/
+    }
+}
