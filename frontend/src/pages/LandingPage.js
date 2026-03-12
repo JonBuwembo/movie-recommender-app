@@ -2,10 +2,14 @@ import React from 'react';
 import './../styles/landing.css';
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
+import { useGenre } from '../GenreContext';
+import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
 
     // PRIMARILY A SEARCH BAR PAGE WITH NAVIGATION TO GENRES
+    const {selectedGenre } = useGenre();
+    const navigateTo = useNavigate();
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -13,6 +17,13 @@ const LandingPage = () => {
         console.log('Search query:', query);
         // Here you can add logic to handle the search query, e.g., redirecting to a search results page
     }
+
+    React.useEffect(() => {
+        // If a genre is selected, navigate to the corresponding genre page
+        if (selectedGenre) {
+            navigateTo(`/genres/${selectedGenre}`);
+        }
+    }, [selectedGenre, navigateTo]);
 
     return (
         <div className='layout'>

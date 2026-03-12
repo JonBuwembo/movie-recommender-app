@@ -25,5 +25,38 @@ nav a:hover {
     text-decoration: underline;
 }
 
+.dropdown {
+    position: relative;
+}
 
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
 
+    background: white;
+    list-style: none;
+    padding: 10px 0;
+
+    min-width: 150px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-menu li {
+    padding: 8px 15px;
+}
+
+.dropdown-menu li a {
+    text-decoration: none;
+    color: rgb(46, 40, 40);
+}
+
+/* Show dropdown on hover */
+.dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu li:hover {
+    background: #f3f3f3;
+}

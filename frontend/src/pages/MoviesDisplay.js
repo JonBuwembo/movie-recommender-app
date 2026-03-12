@@ -1,51 +1,73 @@
 import react, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import '../styles/global.css';
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
 import MovieCard from '../components/MovieCard/MovieCard';
 import '../styles/movies.css';
+import {useGenre } from '../GenreContext';
 
 const MoviesDisplay = () => {
-    const [movies, setMovies] = react.useState([]);
-    
-    useEffect(() => {
-        // Fetch movies from the backend API and set them in state 
-        fetch('http://localhost:5000/api/movies', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
+    const {genreParam} = useParams(); //read url for other pages
+    console.log('Genre param from URL:', genreParam);
+
+    const [displayedMovies, setDisplayedMovies] = react.useState([]);
+
+    //const [selectedGenre, setSelectedGenre] = react.useState(null);
+    const {selectedGenre, setSelectedGenre} = useGenre();
+
+    const [loading, setLoading] = react.useState(false);
+
+    const fetchMovies = (genre) => {
+        setLoading(true);
+        console.log('Fetching movies for genre:', genre);
+        const fetchURL = genre ? `http://localhost:5000/api/movies/${genre}` : 'http://localhost:5000/api/movies';
+
+        fetch(fetchURL)
             .then(response => response.json())
             .then(data => {
-                console.log('Movies data:', data);
-
-                if (Array.isArray(data)) {
-                    console.log('Movies data is an array:', data);
-                    setMovies(data);
-                } else {
-                    console.error('Movies data is not an array:', data);
-                }
+                setDisplayedMovies(data);
+                setSelectedGenre(genre);
+                setLoading(false);
             })
-            .catch(error => console.error('Error fetching movies:', error));
+            .catch(error =>{
+                console.error('Error fetching movies:', error);
+                setDisplayedMovies([]);
+                setSelectedGenre(genre);
+                setLoading(false);
+            });
+    };
 
-    }, []);
+    useEffect(() => {
+        if (genreParam) {
+            console.log('Fetching movies for genre:', genreParam);
+            fetchMovies(genreParam);
+        } else {
+            fetchMovies(null);
+        }
+    }, [genreParam]);
 
     return (
         <div className='layout'>
             <Navbar />
             
             <main>
-                <h2>Movies Display Page</h2>
-                {/* Show all movie thumbnails in a genre here */}
-
-                <p> Display movies here</p>
-
+                {selectedGenre ? 
+                        <h2> Movies in {selectedGenre} genre </h2> 
+                        : <h2> Browse your favorite vintage movies here! </h2>
+                }
+                {/* Show all movie thumbnails in a genre here otherwise all movies */}
 
                 <div className='movies-display'>
-                    {movies.map(movie => (
-                        <MovieCard key={movie.movie_id} movie={movie} />
-                    ))}
+                   {loading ? (
+                       <p>Loading movies... </p> // Show while fetching
+                    ) : displayedMovies.length > 0 ? (
+                        displayedMovies.map(movie => <MovieCard key={movie.movie_id} movie={movie} />)
+                    ) : selectedGenre ? (
+                        <p>No movies found for {selectedGenre}.</p>
+                    ) : (
+                        <p>No movies available.</p>
+                    )}
                 </div>
             </main>
             
