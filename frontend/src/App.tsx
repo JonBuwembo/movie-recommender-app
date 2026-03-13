@@ -20,6 +20,7 @@ function App() {
             <Route path="/movies" element={<MoviesDisplay />} />
             <Route path='/about' element={<About />} />
             <Route path='/genres/:genreParam?' element={<MoviesDisplay />} />
+            <Route path='/movies/:queryParam?' element={<MoviesDisplay />} />
           </Routes>
         </Router>
       </GenreProvider>

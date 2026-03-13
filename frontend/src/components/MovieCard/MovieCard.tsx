@@ -8,7 +8,7 @@ const MovieCard = ({ movie }: { movie: any }) => {
             <div className="movie-info">
                 <h2 className="movie-title">{movie.title}</h2>
                 <p className="movie-year">{movie.release_year}</p> 
-                <p className="movie-genre">{movie.genre}</p>
+                {/* <p className="movie-genre">{movie.genre}</p> */}
             </div>
         </div>
     );

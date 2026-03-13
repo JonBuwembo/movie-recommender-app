@@ -4,9 +4,13 @@
 from dotenv import load_dotenv
 import os
 import sys
+import pandas as pd
+import math 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from database.db_connection import get_db_connection
+from models.content_based import get_similar_movies, movie_indices, movies_df
 
 load_dotenv()
 
@@ -14,6 +18,18 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
+
+def safe_number(value, default=0):
+    """Return a valid number: replace None or NaN with default."""
+    if value is None:
+        return default
+    try:
+        if math.isnan(value):
+            return default
+    except TypeError:
+        # value is not a number, just return default
+        return default
+    return value
 
 @app.route('/api/movies', methods=['GET'])
 def get_all_movies():
@@ -120,6 +136,105 @@ def get_movies_by_genre(genre):
         conn.close()
 
     return jsonify(movies)
+
+@app.route('/api/search/<movie>', methods=['GET'])
+def search_movies(movie):
+    print(f"Search route hit! movie = {movie}")
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_db_connection()
+
+        cursor = conn.cursor()
+        query = """
+             SELECT 
+            m.movie_id,
+            m.title,
+            m.overview,
+            m.release_year,
+            m.rating_avg,
+            m.poster_url,
+            g.name as genre
+        FROM movies m
+        JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
+        JOIN genres g ON mg.genre_id = g.genre_id
+        WHERE m.title ILIKE %s;
+        """
+        search_pattern = f"%{movie}%"
+        cursor.execute(query, (search_pattern,))
+        rows = cursor.fetchall()
+
+        if not rows:
+            return jsonify({"top_results": [], "similar_movies": []}), 200
+        
+        # convert database rows into pandas dataframe for easier manipulation
+        # each column is a field name and each row is a movie.
+        movies_df = pd.DataFrame(rows, columns=[desc[0] for desc in cursor.description])
+
+        movies_df['title'] = movies_df['title'].str.strip()
+        search_query = movie.strip() # remove spaces from user input.
+
+        # finds which rows matches by title. returns movies_df[booleans for each row]
+        matched_movies = movies_df[movies_df['title'].str.contains(search_query, na=False)]
+
+        if matched_movies.empty:
+            return jsonify({"top_results_err": [], "similar_movies_err": []}), 200
+
+        # first matched movie
+        first_movie = matched_movies.iloc[0]
+        # get its index. first_movie.name is original df index of that row.
+        # we convert that index into an integer position that can be used in get_similar_movies
+        movie_index = movies_df.index.get_loc(first_movie.name)
+        
+        
+        top_results = get_similar_movies(movie_index, 10, offset=0)
+        top_results.insert(0, first_movie.to_dict()) # add the query itself at top of list.
+
+        for movie in top_results:
+            movie['rating_avg'] = safe_number(movie.get('rating_avg'))
+            movie['release_year'] = safe_number(movie.get('release_year'))
+            if movie['overview'] is None:
+                movie['overview'] = "No overview available."
+
+        similar_movies = get_similar_movies(movie_index, 30, offset=10)
+
+        for movie in similar_movies:
+            movie['rating_avg'] = safe_number(movie.get('rating_avg'))
+            movie['release_year'] = safe_number(movie.get('release_year'))
+            if movie['overview'] is None:
+                movie['overview'] = "No overview available."
+
+        print(f"Top results for search query '{movie}': {[m['title'] for m in top_results]}")
+        print(f"Similar movies for search query '{movie}': {[m['title'] for m in similar_movies]}")
+
+        response = {
+            "top_results": top_results,
+            "similar_movies": similar_movies
+        }
+
+        print("FINAL RESPONSE:", response)
+        return jsonify(response), 200
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return jsonify({"error": "Failed to search movies"}), 500
+    finally:
+        conn.close()
+        cursor.close()
+
+
+@app.route('/api/recommendations/<int:movie_id>', methods=['GET'])
+def get_recommendations(movie_id):
+    try:
+        movie_index = movie_indices.get(movies_df[movies_df['movie_id'] == movie_id].iloc[0]['title'])
+        if movie_index is None:
+            return jsonify({"error": "Movie not found"}), 404
+
+        similar_movies = get_similar_movies(movie_index)
+        return jsonify(similar_movies), 200
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return jsonify({"error": "Failed to fetch recommendations"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

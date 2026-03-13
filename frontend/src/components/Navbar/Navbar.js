@@ -2,9 +2,14 @@ import react from 'react';
 import './Navbar.css';
 import { useNavigate } from 'react-router-dom';
 import { useGenre } from '../../GenreContext';
+import { Search } from "lucide-react";
+import { useSearch } from '../../SearchContext';
+
 
 const Navbar = () => {
 
+    const {searchQuery, setSearchQuery} = useSearch();
+    
     const {setSelectedGenre} = useGenre();
     const navigateTo = useNavigate();
 
@@ -25,6 +30,7 @@ const Navbar = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         }
     }, []);
+
 
     const toggleDropdown = (e) => {
         e.preventDefault();
@@ -52,11 +58,17 @@ const Navbar = () => {
         "Animation",
         "War"]
 
-    const handleSubmit = (event) => {
+    const handleSearchSubmit = (event) => {
         event.preventDefault();
         const query = event.target.search.value;
+        if (!query) {
+            return;
+        }
+        
+        navigateTo(`/movies/${query}`);
         console.log('Search query:', query);
         // Here you can add logic to handle the search query, e.g., redirecting to a search results page
+        setSearchQuery(''); // clear search input after submission
     }
 
     return (
@@ -90,9 +102,20 @@ const Navbar = () => {
                 <li> <a href="/about">About</a> </li>
             </ul>
 
-            <form className="nav-search" onSubmit={handleSubmit}>
-                <input className="nav-search-input" type='text' name="search" placeholder="Search movies ..." />
-                <button type='submit' className='nav-search-btn'> <i className="fas fa-search"></i> </button>
+            <form className="nav-search" onSubmit={handleSearchSubmit}>
+                <div className="search-wrapper">
+               
+                    <input 
+                        className="nav-search-input" 
+                        type='text' 
+                        name="search" 
+                        placeholder="Search movies ..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {/* <button type='submit' className='nav-search-btn'> <Search size={20} /> </button> */}
+                </div>
+                
             </form>
         </nav>
     );

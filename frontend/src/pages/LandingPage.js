@@ -4,18 +4,23 @@ import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
 import { useGenre } from '../GenreContext';
 import { useNavigate } from 'react-router-dom';
+import { useSearch } from '../SearchContext';
 
 const LandingPage = () => {
 
     // PRIMARILY A SEARCH BAR PAGE WITH NAVIGATION TO GENRES
     const {selectedGenre } = useGenre();
+    let {searchQuery, setSearchQuery} = useSearch();
     const navigateTo = useNavigate();
 
-    const handleSubmit = (event) => {
+    const handleSearchSubmit = (event) => {
         event.preventDefault();
-        const query = event.target.search.value;
-        console.log('Search query:', query);
-        // Here you can add logic to handle the search query, e.g., redirecting to a search results page
+        console.log('Search query:', searchQuery);
+        // logic for searching from landing page.
+        navigateTo(`/movies/${searchQuery}`);
+        setSearchQuery(searchQuery);
+        console.log('Search query set:', searchQuery);
+        setSearchQuery(''); // Clear the search input after submission
     }
 
     React.useEffect(() => {
@@ -38,8 +43,8 @@ const LandingPage = () => {
                 </div>
                
 
-                <form onSubmit={handleSubmit}>
-                    <input type="text" id="search" placeholder="Search..." />
+                <form onSubmit={handleSearchSubmit}>
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} id="search" placeholder="Search..." />
                     <button type="submit">Search</button>
                 </form>
 
