@@ -1,8 +1,17 @@
 # run server
-`python app.py`
+
+Navigate to the backend folder to run the flask server:
+
+```bash
+cd backend
+python app.py
 
 # run frontend
-`npm start`
+Navigate to the frontend directory then run react:
+
+```bash
+cd frontend
+npm start
 
 # Tech Stack
 - Frontend: React.js
