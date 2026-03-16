@@ -1,5 +1,6 @@
 ---
-# Movie Recommender Application
+# Movie Recommender Application 
+---
 
 _Welcome to my Movie Recommender App, which helps users discover classic and popular films from the 20th and 21st centuries. From James Bond to Toy Story 2, this app has something for every movie fan._
 ---
