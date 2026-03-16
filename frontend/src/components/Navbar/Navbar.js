@@ -60,7 +60,7 @@ const Navbar = () => {
 
     const handleSearchSubmit = (event) => {
         event.preventDefault();
-        const query = event.target.search.value;
+        const query = event.target.search.value.trim();
         if (!query) {
             return;
         }
@@ -68,7 +68,7 @@ const Navbar = () => {
         navigateTo(`/movies/${query}`);
         console.log('Search query:', query);
         // Here you can add logic to handle the search query, e.g., redirecting to a search results page
-        setSearchQuery(''); // clear search input after submission
+        setSearchQuery(''); // Clear the search input after submission
     }
 
     return (

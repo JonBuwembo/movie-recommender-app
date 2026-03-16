@@ -34,26 +34,31 @@ cursor.execute(query)
 
 movies_df = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
 
-# another field for concatenated text used for building similarity matrix.
-movies_df['text'] = movies_df['overview'].fillna('') + ' ' + movies_df['overview'].fillna('')  + ' ' + movies_df['genres'].fillna('') + ' ' + movies_df['title'].fillna('') 
+# # another field for concatenated text used for building similarity matrix.
+# movies_df['text'] = movies_df['overview'].fillna('') + ' ' + movies_df['overview'].fillna('')  + ' ' + movies_df['genres'].fillna('') + ' ' + movies_df['title'].fillna('') 
 
-corpus = movies_df['text'].tolist()
+# corpus = movies_df['text'].tolist()
 
-vectorizer = TfidfVectorizer(stop_words='english')
-tfidf_matrix = vectorizer.fit_transform(corpus)
-similarity_matrix = cosine_similarity(tfidf_matrix)
-
-with open(SIMILARITY_MATRIX_PATH, 'wb') as f:
-    pickle.dump(similarity_matrix, f)
-
-with open(TDFIDF_PATH, 'wb') as f:
-    pickle.dump(tfidf_matrix, f)
-
-with open(VECTORIZER_PATH, 'wb') as f:
-    pickle.dump(vectorizer, f)
+# vectorizer = TfidfVectorizer(stop_words='english')
+# tfidf_matrix = vectorizer.fit_transform(corpus)
+# similarity_matrix = cosine_similarity(tfidf_matrix)
 
 # movie_indices = {title: idx for idx, title in enumerate(movies_df['title'])}
-movie_indices = pd.Series(movies_df.index, index=movies_df['title']).to_dict()
+movies_df["title_clean"] = movies_df["title"].str.lower().str.strip()
+movie_indices = pd.Series(
+    movies_df.index,
+    index=movies_df['title_clean'].str.lower().str.strip()
+    ).to_dict()
+
+
+with open(SIMILARITY_MATRIX_PATH, 'rb') as f:
+    similarity_matrix = pickle.load(f)
+
+# with open(TDFIDF_PATH, 'wb') as f:
+#     pickle.dump(tfidf_matrix, f)
+
+# with open(VECTORIZER_PATH, 'wb') as f:
+#     pickle.dump(vectorizer, f)
 
 def get_similar_movies(movie_index, top_n=10, offset=0):
     scores = list(enumerate(similarity_matrix[movie_index]))

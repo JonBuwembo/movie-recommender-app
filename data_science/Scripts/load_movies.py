@@ -65,7 +65,5 @@ with engine.begin() as connection:
     join_df = pd.DataFrame(joined_rows)
     join_df.to_sql('MovieGenres', connection, if_exists='append', index=False)
 
-print("CSV data loaded into Movies, Genres, and MoveiGenres successfully!!")
+print("CSV data loaded into Movies, Genres, and MovieGenres successfully!!")
 
-
-    

@@ -17,3 +17,13 @@
         max-width: 150px; /*adjust card width for smaller screens*/
     }
 }
+
+h2 {
+    font-size: 2.0rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+    text-align: center;
+    margin-top: 20px;
+}

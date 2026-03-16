@@ -30,7 +30,7 @@ const MoviesDisplay = () => {
     const {searchQuery, setSearchQuery} = useSearch();
 
     const fetchMoviesBySearch = (query) => {
-        setSearchQuery("");   
+        setSearchQuery('');
 
         if (!query) {
             return;
@@ -93,47 +93,65 @@ const MoviesDisplay = () => {
         }
     }, [queryParam]);
 
-    return (
+    function renderMovies() {
+        if (loading) {
+            return <p>Loading movies... </p> 
+        }
+        
+        if (searchResults.top_results.length > 0 && queryParam) {
+            return (
+                <>
+                    <h3> Top Results </h3>
+                    <div className='movies-display'>
+                        {searchResults.top_results.map(
+                            movie => (<MovieCard key={movie.movie_id} movie={movie} />
+                        ))}
+                    </div>
+                    <h3> Similar Movies </h3>
+                    <div className='movies-display'>
+                        {searchResults.similar_movies.map(
+                            movie => (<MovieCard key={movie.movie_id} movie={movie} />
+                        ))}
+                    </div>
+                </>
+            ); 
+        } else if (searchResults.top_results.length === 0 && queryParam) {
+            return <h3>Whoops!! No results found for "{queryParam}".</h3>;
+        } else if (displayedMovies.length > 0 ) {
+            return (
+            <div className='movies-display'>
+                {displayedMovies.map(movie => <MovieCard key={movie.movie_id} movie={movie} />)}
+            </div>
+            );
+
+        } else if (selectedGenre && displayedMovies.length === 0) {
+            return <h3>No movies found for {selectedGenre}.</h3>
+        }
+
+        return <p>No movies available.</p>
+    }
+
+    return(
         <div className='layout'>
             <Navbar />
             
             <main>
-                {selectedGenre ? 
-                        <h2> Movies in {selectedGenre} genre </h2> 
-                        : <h2> Browse your favorite vintage movies here! </h2>
-                }
+                {queryParam && <h2 />}
+
+                {!queryParam && selectedGenre && (
+                    <h2>Movies in {selectedGenre} genre</h2>
+                )}
+
+                {!queryParam && !selectedGenre && (
+                    <h2>Browse your favorite vintage movies here!</h2>
+                )}
+                
                 {/* Show all movie thumbnails in a genre here otherwise all movies */}
 
-                   {loading ? (
-                       <p>Loading movies... </p> 
-                    ) : (searchResults.top_results.length > 0) ? (
-                        <>
-                            <h3> Top Results </h3>
-                            <div className='movies-display'>
-                            {searchResults.top_results.map(
-                                movie => (<MovieCard key={movie.movie_id} movie={movie} />
-                                ))}
-                            </div>
-                            <h3> Similar Movies </h3>
-                            <div className='movies-display'>
-                                {searchResults.similar_movies.map(
-                                    movie => (<MovieCard key={movie.movie_id} movie={movie} />)
-                                )}
-                            </div>
-                        </>
-                    ) : displayedMovies.length > 0 ? (
-                        <div className='movies-display'>
-                            {displayedMovies.map(movie => <MovieCard key={movie.movie_id} movie={movie} />)}
-                        </div>
-                    ) : selectedGenre ? (
-                        <p>No movies found for {selectedGenre}.</p>
-                    ) : (
-                        <p>No movies available.</p>
-                    )}
+                {renderMovies()}
                 
             </main>
             
-
             <Footer />
         </div>
     );
