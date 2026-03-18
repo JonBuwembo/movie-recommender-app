@@ -67,4 +67,4 @@ def get_similar_movies(movie_index, top_n=10, offset=0):
 
     similar_indices = [i for i, _ in scores[1 + offset : top_n + offset + 1]]
     # iloc: integer-location based indexing for selection by position
-    return movies_df.iloc[similar_indices][['title', 'overview', 'release_year', 'rating_avg', 'poster_url']].to_dict(orient='records')
+    return movies_df.iloc[similar_indices][['movie_id', 'title', 'overview', 'genres', 'release_year', 'rating_avg', 'poster_url']].to_dict(orient='records')

@@ -231,15 +231,85 @@ def search_movies(movie):
         cursor.close()
 
 
-@app.route('/api/recommendations/<int:movie_id>', methods=['GET'])
-def get_recommendations(movie_id):
-    try:
-        movie_index = movie_indices.get(movies_df[movies_df['movie_id'] == movie_id].iloc[0]['title'])
-        if movie_index is None:
-            return jsonify({"error": "Movie not found"}), 404
+@app.route('/api/details/<int:movie_id>', methods=['GET'])
+def get_movie_details(movie_id):
+    connection = None
+    cursor = None
 
-        similar_movies = get_similar_movies(movie_index)
-        return jsonify(similar_movies), 200
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        query = """
+         SELECT 
+            m.movie_id,
+            m.title,
+            m.overview,
+            m.release_year,
+            m.rating_avg,
+            m.poster_url,
+            STRING_AGG(g.name, ', ') AS genres
+        FROM movies m
+        JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
+        JOIN genres g ON mg.genre_id = g.genre_id
+        WHERE m.movie_id = %s
+        GROUP BY m.movie_id, m.title, m.overview, m.release_year, m.rating_avg, m.poster_url;
+        """
+
+        cursor.execute(query, (movie_id,))
+        row = cursor.fetchone()
+
+        print("Here at the beginning")
+        if row:
+            movie = {
+                "movie_id": row["movie_id"],
+                "title": row["title"],
+                "genres": row["genres"],
+                "overview": row["overview"],
+                "release_year": row["release_year"],
+                "rating_avg" : row["rating_avg"],
+                "poster_url" : row["poster_url"] 
+            }
+        
+        print("here now")
+
+        if not row:
+            return jsonify({
+                "title":  "Unknown Movie",
+                "genres": "unknown genre",
+                "overview": "Unknown",
+                "release_year": 0,
+                "rating_avg": 0,
+                "poster_url": "Unkown",
+                "recommendations": []
+            })
+    
+        # get its recommendations
+        movie_title = movie["title"].lower().strip()
+
+        if movie_title not in movie_indices:
+            return jsonify({
+                    "movie" : movie,
+                    "recommendations" : []
+                })
+        
+        print("Here first")
+        movie_index = movie_indices[movie_title]
+        top_recommendations = get_similar_movies(movie_index, 10, offset=0)
+        print("Got here")
+        for rec in top_recommendations:
+            rec['rating_avg'] = safe_number(rec.get('rating_avg'))
+            rec['release_year'] = safe_number(rec.get('release_year'))
+            if rec['overview'] is None:
+                rec['overview'] = "No overview available."
+
+        response = {
+            "movie": movie, 
+            "recommendations": top_recommendations
+        }
+
+        return jsonify(response)
+
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": "Failed to fetch recommendations"}), 500

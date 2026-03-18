@@ -7,6 +7,7 @@ import ResultsPage from './pages/ResultsPage';
 import MoviesDisplay from './pages/MoviesDisplay';
 import About from './pages/About';
 import { GenreProvider } from './GenreContext';
+import MovieDetails from './pages/MovieDetails';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path='/about' element={<About />} />
             <Route path='/genres/:genreParam?' element={<MoviesDisplay />} />
             <Route path='/movies/:queryParam?' element={<MoviesDisplay />} />
+            <Route path='/movies/details/:movieIdParam?' element={<MovieDetails />} />
           </Routes>
         </Router>
       </GenreProvider>
