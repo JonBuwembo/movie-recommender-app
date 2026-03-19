@@ -51,10 +51,14 @@ const MovieDetails = () => {
         fetchMovie(movieIdParam)
     }, [movieIdParam])
 
+    if (loading) {
+        return <p className="loading"> loading movies ...</p>
+    }
+
     return (
         <div className='layout'>
             <Navbar />
-            
+ 
             {/* When a user clicks on a movie, the details of that movie, summary, cast, and other relevant information are displayed here */}
             <main className="main-wrapper">
                 <div className="grid-wrapper">
@@ -91,7 +95,7 @@ const MovieDetails = () => {
                     </div>
                     
                 </section>
-            </main>
+            </main> 
             <Footer />
         </div>
     );
