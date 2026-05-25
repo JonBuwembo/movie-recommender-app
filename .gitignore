@@ -22,3 +22,7 @@ node_modules/
 
 # OS
 .DS_Store
+
+*.csv
+data_science/datasets/raw/*.csv
+data_science/datasets/processed/*.csv

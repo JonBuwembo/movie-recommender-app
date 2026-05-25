@@ -15,7 +15,7 @@
 
 .grid-wrapper {
     width: 100%;
-    align-items: start;
+    align-items: stretch;
     background-color: rgb(215, 219, 225);
     display: grid;
     grid-auto-rows: auto;
@@ -32,16 +32,30 @@
 
 .movie-poster {
     grid-area: poster;
-    max-height: 80vh;
+    height: 100%;
+
+    position: relative;
 }
 
 .movie-poster img {
     width: 100%;
     height: 100%;
     display: block;
-    max-height: 80vh;
-    object-fit: contain;
+    object-fit: cover;
 
+    border-radius: 24px;
+
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+
+}
+
+.movie-poster img:hover {
+    transform: translateY(-4px) scale(1.015);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 
 .movie-details-info {
@@ -50,6 +64,69 @@
     justify-content: flex-start;
     flex-direction: column;
     height: 100%;
+
+    background: 
+        linear-gradient(
+            145deg,
+            rgba(52, 52, 78, 0.95) 0%,
+            rgba(38, 38, 60, 0.90) 30%,
+            rgba(14, 14, 24, 0.85) 100%
+        );
+
+    backdrop-filter: blur(16px);
+
+    padding: 28px;
+
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.42);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    color: white;
+
+    overflow: hidden;
+
+    position: relative;
+
+    border-radius: 18px;
+}
+
+.movie-details-info {
+    animation: fadeUp 0.45s ease both;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.movie-details-info::before {
+    content: "";
+
+    position: absolute;
+
+    top: -120px;
+    right: -120px;
+
+    width: 240px;
+    height: 240px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            rgba(59, 130, 246, 0.22),
+            transparent 70%
+        );
+
+    pointer-events: none;
 }
 
 .recommendations {
@@ -62,17 +139,32 @@
     font-size: 1.3rem;
     font-weight: bold;
     margin-top: 20px;
+
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+
+    color: #93c5fd;
 }
 
 .movie-details-info h2 {
     font-size: 2.0rem;
     margin-top: 0;
+
+    font-weight: 900;
+
+    line-height: 1.05;
+
+    margin-bottom: 20px;
+    letter-spacing: -0.03em;
 }
 
 .movie-details-info p {
     font-size: 1.2rem;
     margin-top: 5px;
     width: 75%;
+
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.8;
 }
 
 .recommendations p {
@@ -84,4 +176,82 @@
 .loading {
     font-size: 1.7rem;
     font-weight: bold;
+}
+
+.stars {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stars svg {
+    display: block;
+}
+
+.rating-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.rating-label {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.rating-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.rating-box {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+
+    padding: 10px 14px;
+    border: 1px solid rgba(46, 55, 70, 0.45);
+    border-radius: 9px;
+
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(8px);
+
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.community-rating-pill {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    margin: 8px 0 18px 0;
+    padding: 7px 12px;
+
+    border-radius: 999px;
+    background: rgba(10, 247, 73, 0.9);
+    color: white;
+
+    font-size: 0.95rem;
+    font-weight: 700;
+
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.watchlist-btn {
+
+    margin: 8px 0 18px 0;
+    padding: 15px 17px;
+    width: fit-content;
+
+    display: inline-flex;
+    border: 1px solid rgba(46, 55, 70, 0.45);
+    border-radius: 9px;
+
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    gap: 10px;
+
+    background-color: rgb(38, 38, 32);
+    font-family: 'Inter', 'Arial';
 }

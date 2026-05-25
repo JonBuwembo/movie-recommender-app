@@ -1,26 +1,102 @@
-nav {
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Kurale&family=Momo+Trust+Display&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap');
+
+.navbar {
     display:flex;
     background: #1C0F13;
-    padding: 15px 32px;
+    /* padding: 15px 32px; */
     justify-content: space-between;
+    align-items: center;
+
+    padding: 1rem 2rem;
+    font-family: 'Inter', Arial;
+    text-decoration: none;
+}
+
+.nav-left {
+    display: flex;
+    gap: 2rem;
     align-items: center;
 }
 
-nav ul {
+.nav-right {
     display: flex;
-    gap: 30px;
-    list-style: none;
+    align-items: center;
+    gap: 1.5rem;
 }
 
-nav a {
+.nav-links {
+    color: #F0EFF4;
+    font-size: 18px;
+    font-weight: 500;
+
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+   
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+.nav-search {
+    display: flex;
+    flex: 1;
+    gap: 1.5rem;
+    list-style: none;
+    justify-content: center;
+}
+
+.nav-search input {
+    width: 230px;
+    padding: 0.7rem 1rem;
+}
+
+.logo {
+    color: #F0EFF4;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.nav-links > li > a,
+.nav-right > li > a,
+.signout-btn {
+
+    display: inline-block;
+
     color: #F0EFF4;
     font-size: 18px;
     font-weight: 500;
     text-decoration: none;
+
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+
+    font-family: 'Inter', Arial;
+    font-weight: 700;
+
+    /* icons are aligned with their links*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease,
+        background 0.2s ease,
+        opacity 0.2s ease;
 }
 
-nav a:hover {
-    text-decoration: underline;
+.nav-links > li > a:hover,
+.nav-right > li > a:hover,
+.signout-btn:hover {
+    background-color:#4d4141;
+    transform: scale(1.05);
+    color: #f7fdff;
+    text-decoration: none;
 }
 
 .dropdown {
@@ -37,8 +113,11 @@ nav a:hover {
     list-style: none;
     padding: 10px 0;
 
+    
     min-width: 150px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+    z-index: 25;
 }
 
 .dropdown-menu li {
@@ -47,6 +126,7 @@ nav a:hover {
 
 .dropdown-menu li a {
     text-decoration: none;
+
     color: rgb(46, 40, 40);
 }
 

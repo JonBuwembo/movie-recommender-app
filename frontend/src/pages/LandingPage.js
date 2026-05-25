@@ -15,11 +15,10 @@ const LandingPage = () => {
 
     const handleSearchSubmit = (event) => {
         event.preventDefault();
-        console.log('Search query:', searchQuery);
+
         // logic for searching from landing page.
-        navigateTo(`/movies/${searchQuery}`);
+        navigateTo(`/movies/search/${searchQuery}`);
         setSearchQuery(searchQuery);
-        console.log('Search query set:', searchQuery);
         setSearchQuery(''); // Clear the search input after submission
     }
 
@@ -42,14 +41,12 @@ const LandingPage = () => {
                     </p>
                 </div>
                
-
                 <form onSubmit={handleSearchSubmit}>
                     <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} id="search" placeholder="Search..." />
                     <button type="submit">Search</button>
                 </form>
 
             </main>
-
             <Footer />
         
         </div>

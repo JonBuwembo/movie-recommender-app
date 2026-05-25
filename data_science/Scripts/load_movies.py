@@ -1,3 +1,4 @@
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
@@ -6,6 +7,7 @@ from pathlib import Path
 # Load environment variables from .env file
 dotenv_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=dotenv_path)
+sys.path.append(str(backend_path))
 
 df = pd.read_csv('C:/Users/jonab/.vscode/PROJECTS/Web Development Projects/Movie Recommendation Application/data_science/datasets/processed/movies_clean_again.csv')
 

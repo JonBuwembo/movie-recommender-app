@@ -8,6 +8,9 @@ import MoviesDisplay from './pages/MoviesDisplay';
 import About from './pages/About';
 import { GenreProvider } from './GenreContext';
 import MovieDetails from './pages/MovieDetails';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -16,13 +19,56 @@ function App() {
       <GenreProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/results" element={<ResultsPage />} />
-            <Route path="/movies" element={<MoviesDisplay />} />
-            <Route path='/about' element={<About />} />
-            <Route path='/genres/:genreParam?' element={<MoviesDisplay />} />
-            <Route path='/movies/:queryParam?' element={<MoviesDisplay />} />
-            <Route path='/movies/details/:movieIdParam?' element={<MovieDetails />} />
+            <Route path="/" element={<Login />} />           
+            <Route path="/register" element={<Register />} />
+
+            {/* Routes below should only be accessible after the user logs in. */}
+            <Route path="/home" element={
+              <ProtectedRoute> 
+                <LandingPage /> 
+              </ProtectedRoute>
+            } />
+
+            <Route path="/results" element={
+              <ProtectedRoute> 
+                <ResultsPage /> 
+              </ProtectedRoute>
+            } />
+
+            <Route path="/movies" element={
+              <ProtectedRoute> 
+                <MoviesDisplay /> 
+              </ProtectedRoute> 
+            } />
+
+            <Route path='/movies/search/:queryParam?' element={
+              <ProtectedRoute> 
+                <MoviesDisplay /> 
+              </ProtectedRoute> } />
+
+            <Route path='/movies/watchlist/:userId?' element={
+              <ProtectedRoute> 
+                <MoviesDisplay /> 
+              </ProtectedRoute> 
+            } />
+
+            <Route path='/movies/details/:movieIdParam?' element={
+              <ProtectedRoute> 
+                <MovieDetails /> 
+              </ProtectedRoute> 
+            } />
+
+            <Route path='/genres/:genreParam?' element={
+              <ProtectedRoute> 
+                <MoviesDisplay /> 
+              </ProtectedRoute> } />
+
+            <Route path='/about' element={
+              <ProtectedRoute> 
+                <About /> 
+              </ProtectedRoute> 
+            } />            
+            
           </Routes>
         </Router>
       </GenreProvider>

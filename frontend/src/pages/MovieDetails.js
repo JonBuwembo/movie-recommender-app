@@ -4,7 +4,8 @@ import Footer from '../components/Footer/Footer';
 import MovieCard from '../components/MovieCard/MovieCard';
 import { useParams } from 'react-router-dom';
 import '../styles/movieDetails.css';
-
+import StarRating from '../components/StarRating/StarRating';
+import { Bookmark} from "lucide-react";
 
 const MovieDetails = () => {
 
@@ -27,7 +28,10 @@ const MovieDetails = () => {
         // Fetch movie details using the movieId from the URL
         // fetch(`http://localhost:5000/api/movies/${movieId}`)
         // Then set the movie details in state to display on the page
-        fetch(`http://localhost:5000/api/details/${encodeURIComponent(movieId)}`)
+        const BASE_URL = process.env.NODE_ENV === 'production'? 
+            `http://movie-recommender-backend.onrender.com`: `http://localhost:5000`;
+
+        fetch(`${BASE_URL}/api/details/${encodeURIComponent(movieId)}`)
             .then(response => response.json())
             .then(data => {
                 setMoviePoster(data.movie.poster_url);
@@ -70,6 +74,12 @@ const MovieDetails = () => {
 
                     <section className='movie-details-info'>
                         <h2> {movieTitle} <span> ({movieReleaseYear})</span> </h2>
+
+                        <div className="community-rating-pill">
+                            ⭐ {4.2}
+                            <span>(53 votes)</span>
+                        </div>
+
                         {/* Movie Summary */}
                         <label> Summary </label>
                         <p>{movieSummary}</p>
@@ -79,8 +89,22 @@ const MovieDetails = () => {
                         <p>{movieGenres}</p>
 
                         {/* Movie Rating */}
-                        <label> Average Rating </label>
-                        <p>{Number(movieRating).toFixed(2)}</p>
+                        {/* <label className="rating-label"> Average Rating </label>
+                        <p>{Number(movieRating).toFixed(2)}</p> */}
+
+                        {/* Rating of the movie */}
+                        <div className="rating-section">
+                            <span className="rating-label">Rate this movie</span>
+
+                            <div className="rating-box">
+                                <StarRating 
+                                    movieId={movieIdParam}
+                                 />
+                            </div>
+
+                            <button className='watchlist-btn'> <Bookmark size={20}/> Add to Watchlist </button>
+                        </div>
+
                     </section>
                 </div>
 

@@ -2,8 +2,8 @@ import react from 'react';
 import './Navbar.css';
 import { useNavigate } from 'react-router-dom';
 import { useGenre } from '../../GenreContext';
-import { Search } from "lucide-react";
 import { useSearch } from '../../SearchContext';
+import { Clapperboard, Film, Search, House, LogOut, Bookmark, Bot, BookA } from "lucide-react";
 
 
 const Navbar = () => {
@@ -15,6 +15,8 @@ const Navbar = () => {
 
     const [open, setOpen] = react.useState(false);
     const dropdownRef = react.useRef(null);
+
+    const userId = JSON.parse(localStorage.getItem('user') || "null");
 
     // Close dropdown when user clicks outside 
     react.useEffect(() => {
@@ -65,43 +67,76 @@ const Navbar = () => {
             return;
         }
         
-        navigateTo(`/movies/${query}`);
+        navigateTo(`/movies/search/${query}`);
         console.log('Search query:', query);
         // Here you can add logic to handle the search query, e.g., redirecting to a search results page
         setSearchQuery(''); // Clear the search input after submission
     }
 
+    const signOut = (event) => {
+        event.preventDefault();
+        localStorage.removeItem('user');
+        navigateTo("/");
+    }
+
     return (
-        <nav>
-            <ul>
-                <li> <a href="/">Home</a> </li>
-                <li className='dropdown' ref={dropdownRef}>
+        <nav className="navbar">
 
-                    <a href="/genres" onClick={toggleDropdown}>Genres</a> 
+            <div className="nav-left">
+                
+                <a className='logo' href="#">
+                    🎬 MidnightScoop
+                </a>
 
-                    {open &&
-                        <ul className='dropdown-menu'>
-                            {genres.map(genre => (
-                                <li key={genre}> 
-                                    <a href={`/genres/${genre}`} 
-                                    onClick={
-                                        (e) => {
-                                            e.preventDefault(); {/* needed so genre can actually be passed up */}
-                                            handleGenreSelect(genre);
-                                        }
-                                    }>
-                                        {genre} 
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    }
+                <ul className='nav-links'>
+                    <li> <a href="/home"> <House size={20} /> Home</a> </li>
+                    <li className='dropdown' ref={dropdownRef}>
+
+                        <a href="/genres" onClick={toggleDropdown}>
+                            <Film size={20} /> 
+                            Genres
+                        </a> 
+
+
+                        
+                            {open &&
+                                <ul className='dropdown-menu'>
+                                    {genres.map(genre => (
+                                        <li key={genre}> 
+                                            <a href={`/genres/${genre}`} 
+                                            onClick={
+                                                (e) => {
+                                                    e.preventDefault(); {/* needed so genre can actually be passed up */}
+                                                    handleGenreSelect(genre);
+                                                }
+                                            }>
+                                                {genre} 
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            }
+                        
+                        
+                    </li>
+
+                    <li> 
+                        <a href="/movies"> 
+                            <Clapperboard size={20} /> 
+                            Movies 
+                        </a> 
+                    </li>
+                    <li> <a href="/about"> <BookA size={20} /> About</a> </li>
                     
-                </li>
-                <li> <a href="/movies"> Movies </a> </li>
-                <li> <a href="/about">About</a> </li>
-            </ul>
+                    <li> <a href="#"> <Bot size={20} /> Ask</a></li>
+                </ul>
 
+
+            </div>
+
+            
+
+            
             <form className="nav-search" onSubmit={handleSearchSubmit}>
                 <div className="search-wrapper">
                
@@ -117,6 +152,16 @@ const Navbar = () => {
                 </div>
                 
             </form>
+
+            <div className='nav-right'>
+                <li className='nav-links'> <a href={`/movies/watchlist/${userId}`}> <Bookmark size={20} />Watchlist</a></li>
+
+                <button className="signout-btn" onClick={signOut}>
+                    <LogOut size={20} />
+                    Sign Out
+                </button>
+            </div>
+
         </nav>
     );
 }

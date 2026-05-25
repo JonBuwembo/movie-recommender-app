@@ -9,7 +9,7 @@ import { useGenre } from '../GenreContext';
 import { useSearch } from '../SearchContext';
 
 const MoviesDisplay = () => {
-    const {genreParam} = useParams(); //read url for other pages
+    const {genreParam, userId} = useParams(); //read url for other pages
     const {queryParam} = useParams();
 
 
@@ -23,7 +23,6 @@ const MoviesDisplay = () => {
 
     console.log('Displayed movies: ', displayedMovies);
 
-    //const [selectedGenre, setSelectedGenre] = react.useState(null);
     const {selectedGenre, setSelectedGenre} = useGenre();
 
     const [loading, setLoading] = react.useState(false);
@@ -43,17 +42,15 @@ const MoviesDisplay = () => {
         fetch(fetchURL)
             .then(response => response.json())
             .then(data => {
-                console.log("Data recieved: ", data);
-                //setDisplayedMovies(data);
                 setSearchResults(data)
                 setLoading(false);
             })
             .catch(error => {
                 console.error('Error fetching movies:', error);
-                //setDisplayedMovies([]);
                 setLoading(false);
             });
     };
+
 
     const fetchMovies = (genre) => {
         setLoading(true);
@@ -75,16 +72,39 @@ const MoviesDisplay = () => {
             });
     };
 
+
+    const fetchWatchlist = (userId) => {
+        // 
+        setLoading(true);
+        const fetchURL = `http://localhost:5000/api/watchlist/${userId}`
+
+        fetch(fetchURL)
+            .then(response => response.json())
+            .then(data => {
+                setDisplayedMovies(data);
+                setSelectedGenre("watchlist");
+                setLoading(false);
+            })
+            .catch(error =>  {
+                console.error("Error fetching watchlist:", error);
+                setDisplayedMovies([]);
+                setLoading(false);
+            })
+    }
+
+
     useEffect(() => {
         if (queryParam) return;
 
-        if (genreParam) {
+        if (userId) {
+            fetchWatchlist(userId);
+        } else if (genreParam) {
             console.log('Fetching movies for genre:', genreParam);
             fetchMovies(genreParam);
         } else {
             fetchMovies(null);
         }
-    }, [genreParam, queryParam]);
+    }, [genreParam, queryParam, userId]);
 
     useEffect(() => {
         if (queryParam) {
@@ -101,13 +121,16 @@ const MoviesDisplay = () => {
         if (searchResults.top_results.length > 0 && queryParam) {
             return (
                 <>
-                    <h3> Top Results </h3>
+                    <h3 className="center"> Top Results </h3>
                     <div className='movies-display'>
                         {searchResults.top_results.map(
-                            movie => (<MovieCard key={movie.movie_id} movie={movie} />
+                            movie => (
+                            <MovieCard 
+                                key={movie.movie_id} 
+                                movie={movie} />
                         ))}
                     </div>
-                    <h3> Similar Movies </h3>
+                    <h3 className='center'> Similar Movies </h3>
                     <div className='movies-display'>
                         {searchResults.similar_movies.map(
                             movie => (<MovieCard key={movie.movie_id} movie={movie} />
@@ -120,7 +143,16 @@ const MoviesDisplay = () => {
         } else if (displayedMovies.length > 0 ) {
             return (
             <div className='movies-display'>
-                {displayedMovies.map(movie => <MovieCard key={movie.movie_id} movie={movie} />)}
+                {displayedMovies.map(movie => (
+                    <MovieCard 
+                        key={movie.movie_id} 
+                        movie={movie}
+                        mode={selectedGenre === "watchlist" ? "watchlist" : "normal"} 
+                        onRemove={(movieId) => {
+                            setDisplayedMovies(prev => prev.filter(movie => movie.movie_id !== movieId))
+                        }}
+                    />
+                ))}
             </div>
             );
 
@@ -138,12 +170,16 @@ const MoviesDisplay = () => {
             <main>
                 {queryParam && <h2 />}
 
-                {!queryParam && selectedGenre && (
-                    <h2>Movies in {selectedGenre} genre</h2>
+                {!queryParam && selectedGenre && selectedGenre !== "watchlist" && (
+                    <h2 className='center'>Movies in {selectedGenre} genre</h2>
                 )}
 
                 {!queryParam && !selectedGenre && (
-                    <h2>Browse your favorite vintage movies here!</h2>
+                    <h2 className='center'>Browse your favorite vintage movies here!</h2>
+                )}
+
+                {!queryParam && selectedGenre === "watchlist" && (
+                    <h2 className='center'>Your Watchlist</h2>
                 )}
                 
                 {/* Show all movie thumbnails in a genre here otherwise all movies */}
