@@ -6,10 +6,13 @@ import { useParams } from 'react-router-dom';
 import '../styles/movieDetails.css';
 import StarRating from '../components/StarRating/StarRating';
 import { Bookmark} from "lucide-react";
+import { useWatchlist } from '../useWatchlist';
 
 const MovieDetails = () => {
 
     const {movieIdParam} = useParams();
+
+    const {addToWatchlist, removeFromWatchlist, watchlist} = useWatchlist();
 
     const [moviePoster, setMoviePoster] = react.useState('');
     const [movieSummary, setMovieSummary] = react.useState('');
@@ -21,6 +24,8 @@ const MovieDetails = () => {
     const [recommendations, setRecommendations] = react.useState([]);
 
     const [loading, setLoading] = react.useState(false);
+
+    const userId = JSON.parse(localStorage.getItem("user") || null);
 
     const fetchMovie = (movieId) => { 
         setLoading(true);
@@ -102,7 +107,7 @@ const MovieDetails = () => {
                                  />
                             </div>
 
-                            <button className='watchlist-btn'> <Bookmark size={20}/> Add to Watchlist </button>
+                            <button className='watchlist-btn' onClick={() => addToWatchlist(userId, movieIdParam)}> <Bookmark size={20}/> Add to Watchlist </button>
                         </div>
 
                     </section>

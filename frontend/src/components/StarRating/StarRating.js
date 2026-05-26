@@ -6,6 +6,7 @@ const StarRating = ({ movieId }) => {
 
     const [rating, setRating] = useState(0);
     const [hoverValue, setHoverValue] = useState(undefined);
+    const userId = JSON.parse(localStorage.getItem('user') || "null");
 
     const handleMouseOverStar = (value) => {
         setHoverValue(value)
@@ -20,16 +21,24 @@ const StarRating = ({ movieId }) => {
 
         try {
             // api endpoint not yet setup, but table is created
-            await fetch("/api/rating"), {
+            const response = await fetch("http://localhost:5000/api/rating", {
                 method: "POST",
                 headers: {
                     "Content-Type" : "application/json"
                 },
                 body: JSON.stringify({
-                    movieId,
-                    rating: value
+                    movieId: movieId,
+                    rating: value,
+                    userId: userId
                 })
+            })
+
+            if (!response.ok) {
+                console.error("failed to update/send rating")
+            } else {
+                console.log( await response.json())
             }
+
         } catch (error) {
             console.log("Error sending rating: ", error)
         }

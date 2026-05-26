@@ -1,28 +1,33 @@
-import react from 'react';
+import React from 'react';
 import { useEffect } from 'react';
 import './MovieCard.css';
 import { useNavigate } from 'react-router-dom';
 import  MovieDetails from '../../pages/MovieDetails';
 import { Trash2, Bookmark } from "lucide-react";
+import { useWatchlist } from '../../useWatchlist';
 
 type watchListMovie = {
     movie_id: number;
 };
 
-const MovieCard = ({ movie, mode = "normal", onRemove}: { movie: any; mode?: string; onRemove?: (movieId: number) => void}) => {
+const MovieCard = ({ movie, mode = "normal"}: { movie: any; mode?: string} ) => {
     const navigateTo = useNavigate();
     const userId = JSON.parse(localStorage.getItem('user') || "null");
-    const [watchlist, setWatchlist] = react.useState<watchListMovie[]>([]);
+    // const [watchlist, setWatchlist] = react.useState<watchListMovie[]>([]);
+
+    const { addToWatchlist, removeFromWatchlist, watchlist, setWatchlist } = useWatchlist();
 
     const saved = watchlist.some(item => item.movie_id === movie.movie_id);
 
+    
 
-    useEffect(() => {
-        fetch(`http://localhost:5000/api/watchlist/${userId}`, { method: "GET"})
-            .then(res => res.json())
-            .then(data => setWatchlist(data))
-            .catch(err => console.error(err));
-    }, []);
+
+    // useEffect(() => {
+    //     fetch(`http://localhost:5000/api/watchlist/${userId}`, { method: "GET"})
+    //         .then(res => res.json())
+    //         .then(data => setWatchlist(data))
+    //         .catch(err => console.error(err));
+    // }, []);
 
     
 
@@ -30,69 +35,7 @@ const MovieCard = ({ movie, mode = "normal", onRemove}: { movie: any; mode?: str
         navigateTo(`/movies/details/${movie.movie_id}`);
     }
 
-    const addToWatchlist = async (
-        e: react.MouseEvent<HTMLButtonElement>
-    ) => {
-        e.stopPropagation();
-
-        try {
-            const response = await fetch(`http://localhost:5000/api/watchlist/${userId}`, { 
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    movie_id: movie.movie_id
-                })
-            }
-        )
-
-        if (!response.ok) {
-            console.log("Failed to add movie to watchlist!")
-            return;
-        }
-
-        const data = await response.json();
-        console.log(data);
-
-        setWatchlist(prev => [...prev, {movie_id: movie.movie_id}]);
-
-
-        } catch (error) {
-            console.error("Failed to add to watchlist", error);
-        }
-        
-    }
-
-    const removeFromWatchlist = async (e: react.MouseEvent<HTMLButtonElement>) => {
-        e.stopPropagation();
-
-        if (!userId || userId === "undefined") {
-            console.error("No valid user id found")
-            return;
-        }
-
-        try {
-            const response = await fetch(
-                `http://localhost:5000/api/watchlist/${userId}/${movie.movie_id}`, {
-                    method: "DELETE"
-                }
-            )
-
-            if (!response.ok) {
-                console.log("Failed to remove movie!");
-                return;
-            }
-
-            onRemove?.(movie.movie_id);
-
-            setWatchlist(prev => prev.filter(item => item.movie_id !== movie.movie_id));
-
-        } catch (err) {
-            console.error("Failed to remove from watchlist", err)
-        }
-    }
+   
 
     return (
         <div className="movie-card" onClick={() => showDetails(movie)}>
@@ -103,14 +46,14 @@ const MovieCard = ({ movie, mode = "normal", onRemove}: { movie: any; mode?: str
             {mode === "watchlist" ? (
                 <button
                     className="trash-btn"
-                    onClick={removeFromWatchlist}
+                    onClick={(e) => {e.stopPropagation(); removeFromWatchlist(userId, movie.movie_id)}}
                 >
                     <Trash2 className="trash-icon" size={20} />
                 </button>
             ):(
                  <button
                     className={`bookmark-btn ${saved? 'saved': ''}`}
-                    onClick={addToWatchlist}
+                    onClick={(e) => {e.stopPropagation(); addToWatchlist(userId, movie.movie_id)}}
                 >
             
                     <Bookmark size={20} />
@@ -121,4 +64,4 @@ const MovieCard = ({ movie, mode = "normal", onRemove}: { movie: any; mode?: str
     );
 }
 
-export default MovieCard;
+export default React.memo(MovieCard);

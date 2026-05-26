@@ -1,7 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import Watchlist, User
-import datetime
+from datetime import datetime, timezone
 
 
 movie_genres = db.Table(
@@ -38,7 +38,8 @@ class Rating(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
     movie_id = db.Column(db.Integer, db.ForeignKey("movies.movie_id"), primary_key=True)
     rating = db.Column(db.Float, nullable=False)
-    rated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    rated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class Genre(db.Model):

@@ -5,6 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { GenreProvider } from './GenreContext';
 import { SearchProvider } from './SearchContext';
+import { WatchlistProvider } from './WatchlistContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -12,9 +13,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <GenreProvider>
-      <SearchProvider>
-        <App />
-      </SearchProvider>
+      <WatchlistProvider>
+        <SearchProvider>
+          <App />
+        </SearchProvider>
+      </WatchlistProvider>
     </GenreProvider>
   </React.StrictMode>
 );

@@ -1,7 +1,8 @@
 from database.db_connection import get_db_connection
 from flask import jsonify, request
-from models.movie_model import Movie, Watchlist
+from models.movie_model import Movie, Watchlist, Rating
 from models.content_based import get_similar_movies
+from datetime import datetime, timezone
 import app
 from app import db
 import math
@@ -30,6 +31,11 @@ def get_all_movies_service():
            return jsonify({"error": "Database connection failed"}), 500
         cursor = conn.cursor()
 
+        page = int(request.args.get("page", 1))
+
+        limit = int(request.args.get("limit"))
+        offset = (page - 1) * limit
+
         query = """
         SELECT 
             m.movie_id,
@@ -42,10 +48,20 @@ def get_all_movies_service():
         FROM movies m
         JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
         JOIN genres g ON mg.genre_id = g.genre_id
-        GROUP BY m.movie_id, m.title, m.overview, m.release_year, m.rating_avg, m.poster_url;
+        GROUP BY 
+            m.movie_id, 
+            m.title, 
+            m.overview, 
+            m.release_year, 
+            m.rating_avg, 
+            m.poster_url
+        
+        ORDER BY m.movie_id
+
+        LIMIT %s OFFSET %s;
         """
 
-        cursor.execute(query)
+        cursor.execute(query, (limit, offset))
         rows = cursor.fetchall()
 
         movies = []
@@ -82,8 +98,15 @@ def get_movies_by_genre_service(genre):
             return jsonify({"error": "Database connection failed"}), 500
         cursor = conn.cursor()
 
+        
+        page = int(request.args.get("page", 1))
+
+        limit = int(request.args.get("limit"))
+
+        offset = (page - 1) * limit
+
         query = """
-        SELECT 
+        SELECT DISTINCT
             m.movie_id,
             m.title,
             m.overview,
@@ -94,10 +117,12 @@ def get_movies_by_genre_service(genre):
         FROM movies m
         JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
         JOIN genres g ON mg.genre_id = g.genre_id
-        WHERE g.name = %s;
+        WHERE g.name = %s
+        ORDER BY m.movie_id
+        LIMIT %s OFFSET %s;
         """
 
-        cursor.execute(query, (genre,))
+        cursor.execute(query, (genre, limit, offset))
         rows = cursor.fetchall()
 
         movies = []
@@ -247,6 +272,7 @@ def add_to_watchlist_service(user_id):
         # access the movies
         frontend = request.get_json()
         movie_id = frontend.get("movie_id")
+        user_id_corr = frontend.get("user_id")
 
         if not movie_id:
             return jsonify({"error":"movie_id is required"}), 400
@@ -257,13 +283,13 @@ def add_to_watchlist_service(user_id):
             return jsonify({"error" : "This movie cannot be found"}), 404
 
         # check if this movie is already in the watchlist for this user.
-        existing_entry = Watchlist.query.filter_by(user_id=user_id, movie_id=movie_id).first()
+        existing_entry = Watchlist.query.filter_by(user_id=user_id_corr, movie_id=movie_id).first()
 
         if existing_entry:
             return jsonify({"message" : "Movie already exists in watchlist for this user."}), 200
         
         # otherwise
-        new_watchlist_entry = Watchlist(user_id=user_id, movie_id=movie_id)
+        new_watchlist_entry = Watchlist(user_id=user_id_corr, movie_id=movie_id)
         
         db.session.add(new_watchlist_entry)
         db.session.commit()
@@ -304,3 +330,36 @@ def remove_from_watchlist_service(user_id, movie_id):
         print(f"Error occurred removing from watchlist: {e}")
         return jsonify({"error" : f"Failed to remove movie from watchlist for user with id: {user_id}"})
   
+
+def handle_rating_service():
+    try:
+        
+        frontend = request.get_json()
+
+        movie_id = frontend.get("movieId")
+        user_id = frontend.get("userId")
+        rating = frontend.get("rating")
+
+        rating_entry = Rating.query.filter_by(user_id=user_id, movie_id=movie_id).first() # object
+
+        if rating_entry:
+            #  update the movie rating with a new rating and then, update updated_at field, then RETURN
+            rating_entry.rating = rating
+            rating_entry.updated_at = datetime.now(timezone.utc)
+            return jsonify({
+                "message" : "rating successfully updated"
+            })
+
+        new_rating_entry = Rating(
+            user_id=user_id, 
+            movie_id=movie_id, 
+            rating=rating, 
+            rated_at=datetime.now(timezone.utc), 
+            updated_at=datetime.now(timezone.utc)) 
+        db.session.add(new_rating_entry)
+        db.session.commit()
+
+        return jsonify({"message" : "successfully rated movie for a user"})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error" : f"Failed to add rating: {e}" })

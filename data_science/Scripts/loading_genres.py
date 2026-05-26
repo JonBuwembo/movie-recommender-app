@@ -213,7 +213,9 @@ def main(limit=75000):
 
             if matched % 100 == 0:
                 connection.commit()
-                print(f"Saving progress for {matched} movies")
+                print("---------------------------------------------------------------------")
+                print(f"********Saving progress for 100 movies! Successfully matched {matched} movies so far!**********")
+                print("---------------------------------------------------------------------")
 
             time.sleep(1.25)
 

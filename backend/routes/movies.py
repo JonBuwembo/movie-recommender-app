@@ -5,7 +5,8 @@ from services.movie_service import (
     get_movie_details_service,
     get_watchlist_service,
     add_to_watchlist_service,
-    remove_from_watchlist_service
+    remove_from_watchlist_service,
+    handle_rating_service
 )
 
 movies_bp = Blueprint('movies', __name__)
@@ -33,3 +34,8 @@ def add_to_watchlist(user_id):
 @movies_bp.route('/api/watchlist/<int:user_id>/<int:movie_id>', methods=['DELETE'])
 def remove_from_watchlist(user_id, movie_id):
     return remove_from_watchlist_service(user_id, movie_id)
+
+# add a route for ratings /api/rating/<int:user_id>/<int:movie_id>
+@movies_bp.route('/api/rating', methods=['POST'])
+def handle_rating():
+    return handle_rating_service()

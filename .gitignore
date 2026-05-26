@@ -26,3 +26,6 @@ node_modules/
 *.csv
 data_science/datasets/raw/*.csv
 data_science/datasets/processed/*.csv
+
+data_science/datasets/
+*.csv
