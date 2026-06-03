@@ -1,21 +1,17 @@
+import { useAuth } from "./AuthContext";
 import { useWatchlistContext } from "./WatchlistContext";
 
 
 export const useWatchlist = () => {
 
+    const {authFetch} = useAuth();
+
     const {watchlist, setWatchlist} = useWatchlistContext();
 
-    const addToWatchlist = async (userId: string, movieId: number) => {
+    const addToWatchlist = async (movieId: number) => {
             try {
-                const response = await fetch(`http://localhost:5000/api/watchlist/${userId}`, { 
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        movie_id: movieId
-                    })
+                const response = await authFetch(`http://localhost:5000/api/watchlist/${movieId}`, { 
+                    method: "POST"
                 })
 
                 if (!response.ok) {
@@ -34,15 +30,11 @@ export const useWatchlist = () => {
 
         }
     
-        const removeFromWatchlist = async (userId: string, movieId: number) => {
-            if (!userId || userId === "undefined") {
-                console.error("No valid user id found")
-                return;
-            }
+        const removeFromWatchlist = async (movieId: number) => {
     
             try {
-                const response = await fetch(
-                    `http://localhost:5000/api/watchlist/${userId}/${movieId}`, {
+                const response = await authFetch(
+                    `http://localhost:5000/api/watchlist/${movieId}`, {
                         method: "DELETE"
                     }
                 )

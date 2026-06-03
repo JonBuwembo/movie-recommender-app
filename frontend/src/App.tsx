@@ -11,6 +11,8 @@ import MovieDetails from './pages/MovieDetails';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
+import Chat from './pages/Chat';
 
 function App() {
   return (
@@ -19,8 +21,18 @@ function App() {
       <GenreProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Login />} />           
-            <Route path="/register" element={<Register />} />
+
+            <Route path="/" element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            } />
+
+            <Route path="/register" element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            } />
 
             {/* Routes below should only be accessible after the user logs in. */}
             <Route path="/home" element={
@@ -46,7 +58,7 @@ function App() {
                 <MoviesDisplay /> 
               </ProtectedRoute> } />
 
-            <Route path='/movies/watchlist/:userId?' element={
+            <Route path='/movies/watchlist' element={
               <ProtectedRoute> 
                 <MoviesDisplay /> 
               </ProtectedRoute> 
@@ -67,6 +79,12 @@ function App() {
               <ProtectedRoute> 
                 <About /> 
               </ProtectedRoute> 
+            } />
+
+            <Route path='/movies/ask' element = {
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
             } />            
             
           </Routes>

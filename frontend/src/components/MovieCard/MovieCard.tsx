@@ -19,8 +19,6 @@ const MovieCard = ({ movie, mode = "normal"}: { movie: any; mode?: string} ) => 
 
     const saved = watchlist.some(item => item.movie_id === movie.movie_id);
 
-    
-
 
     // useEffect(() => {
     //     fetch(`http://localhost:5000/api/watchlist/${userId}`, { method: "GET"})
@@ -46,14 +44,14 @@ const MovieCard = ({ movie, mode = "normal"}: { movie: any; mode?: string} ) => 
             {mode === "watchlist" ? (
                 <button
                     className="trash-btn"
-                    onClick={(e) => {e.stopPropagation(); removeFromWatchlist(userId, movie.movie_id)}}
+                    onClick={(e) => {e.stopPropagation(); removeFromWatchlist(movie.movie_id)}}
                 >
                     <Trash2 className="trash-icon" size={20} />
                 </button>
             ):(
-                 <button
+                <button
                     className={`bookmark-btn ${saved? 'saved': ''}`}
-                    onClick={(e) => {e.stopPropagation(); addToWatchlist(userId, movie.movie_id)}}
+                    onClick={(e) => {e.stopPropagation(); addToWatchlist(movie.movie_id)}}
                 >
             
                     <Bookmark size={20} />

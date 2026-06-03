@@ -4,6 +4,7 @@ import {
     useEffect,
     useState
 } from "react";
+import { useAuth } from "./AuthContext";
 
 type WatchlistMovie = {
     movie_id: number
@@ -24,10 +25,12 @@ export const WatchlistProvider = ({children}: { children: React.ReactNode}) => {
     const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([]);
     const userId = JSON.parse(localStorage.getItem('user') || "null");
 
+    const { authFetch } = useAuth();
+
     // load watchlist with the watchlist data in the database! Crucial.
     useEffect(() => {
         if (!userId) return;
-        fetch(`http://localhost:5000/api/watchlist/${userId}`)
+        authFetch(`http://localhost:5000/api/watchlist`)
             .then(response => response.json())
             .then(data => setWatchlist(data.map((movie : WatchlistMovie) => ({ movie_id: movie.movie_id }))))
             .catch(err => console.error(err));

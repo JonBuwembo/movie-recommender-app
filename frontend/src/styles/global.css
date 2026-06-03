@@ -12,10 +12,48 @@
     font-family: 'Roboto Condensed', sans-serif;
 }
 
-main {
+.movies-main {
     padding: 20px;
-    background-color: aliceblue;
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(99, 102, 241, 0.12),
+            transparent 50%
+        ),
+
+        radial-gradient(
+            circle at bottom right,
+            rgba(168, 85, 247, 0.10),
+            transparent 28%
+        ),
+
+        linear-gradient(
+            180deg,
+            #111827 0%,
+            #0f172a 45%,
+            #020617 100%
+        );
+    color: white;
     margin: 0;
+}
+
+.movies-main::before {
+    content: "";
+
+    position: fixed;
+    inset: 0;
+
+    pointer-events: none;
+
+    background-image:
+        radial-gradient(
+            rgba(255,255,255,0.03) 1px,
+            transparent 1px
+        );
+
+    background-size: 18px 18px;
+
+    opacity: 0.3;
 }
 
 html, body {

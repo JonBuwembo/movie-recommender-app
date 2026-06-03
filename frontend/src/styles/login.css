@@ -1,5 +1,6 @@
 
-.login-wrapper{
+
+.login-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -9,36 +10,126 @@
 }
 
 .login-wrapper h2 {
+    margin-bottom: 2px;
+    align-self: center;
+    font-weight: 800;
+    color: #59738f;
+    margin-bottom: 4px;
+}
+
+.login-subtitle {
+    font-size: 15px;
+    font-style: italic;
+    color: #979393;
     margin-bottom: 20px;
+    font-weight: 600;
+    align-self: center;
 }
 
 .login-wrapper form {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+
+    border: 1px solid rgb(129, 120, 120);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+
+    border-radius: 15px;
+    padding: 35px 25px;
+    background-color:#fdfdfd;
 }
 
 .login-wrapper form input {
     margin-bottom: 10px;
-    padding: 10px;
-    width: 500px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: 0.25s ease;
 }
-.login-wrapper form button {
+
+.login-wrapper form .login-btn {
     padding-top: 10px;
-    margin: 0;
-    padding-bottom: 10px;
-    width: 100%;
+    margin-top: 25px;
     background-color: #59738f;
     color: white;
     border: none;
     cursor: pointer;
+
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.2s ease;
+    
 }
 
-.login-wrapper form button:hover {
+.login-wrapper form input,
+.login-wrapper form .login-btn {
+    max-width: 500px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    margin-left: 0;
+}
+
+.login-wrapper form input:focus {
+    outline: none;
+    border-color: #59738f;
+    box-shadow:
+        0 0 0 3px rgba(89,115,143,0.2);
+}
+
+.login-wrapper form .login-btn:hover {
     background-color: #0b2d52;
 }
 
 .login-wrapper form p {
-    margin-top: 10px;
+    margin-top: 0px;
 }
 
+.error {
+    color: #FF0000;
+    font-weight: bold;
+    min-height: 23px;
+}
+
+{/* mobile phone/tablet screens*/}
+@media (min-width: 600px) {
+    .login-wrapper form {
+        padding: 40px 35px;
+        width: 90%;
+        max-width: 420px;
+    }
+
+    .login-wrapper h2 {
+        font-size: 28px;
+    }
+
+    .login-wrapper form input,
+    .login-wrapper form .login-btn {
+        font-size: 1.05rem;
+        padding: 12px;
+    }
+}
+
+{/* Desktop screens*/}
+@media (min-width: 1024px) {
+    .login-wrapper form {
+        max-width: 480px;
+        padding: 45px 40px;
+    }
+
+    .login-wrapper h2 {
+        font-size: 32px;
+    }
+
+    .login-wrapper form input,
+    .login-wrapper form .login-btn {
+        font-size: 1.1rem;
+    }
+}
+
+{/* Very large screens*/}
+@media (min-width: 1440px) {
+    .login-erapper form {
+        max-width: 520px;
+    }
+}

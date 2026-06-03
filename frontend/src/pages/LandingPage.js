@@ -1,10 +1,14 @@
 import React from 'react';
 import './../styles/landing.css';
+import './../styles/movies.css';
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
 import { useGenre } from '../GenreContext';
 import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../SearchContext';
+import { useAuth } from '../AuthContext';
+import MovieCard from '../components/MovieCard/MovieCard';
+
 
 const LandingPage = () => {
 
@@ -13,6 +17,9 @@ const LandingPage = () => {
     let {searchQuery, setSearchQuery} = useSearch();
     const navigateTo = useNavigate();
 
+    const {authFetch} = useAuth();
+
+    const [recommendations, setRecommendations] = React.useState([]);
     const handleSearchSubmit = (event) => {
         event.preventDefault();
 
@@ -22,29 +29,55 @@ const LandingPage = () => {
         setSearchQuery(''); // Clear the search input after submission
     }
 
+
     React.useEffect(() => {
-        // If a genre is selected, navigate to the corresponding genre page
-        if (selectedGenre) {
-            navigateTo(`/genres/${selectedGenre}`);
+
+        const getRecommendations = async () => {
+
+            try {
+                const response = await authFetch("http://localhost:5000/api/recommendations");
+                const data = await response.json();
+
+                if(!response.ok) {
+                    console.log("Failed to fetch homepage recommendations.");
+                    return;
+                }
+
+                setRecommendations(data.recommendations.recommendations);
+
+            } catch (err) {
+                console.error("Error with recommendations:", err);
+            }
+           
+
         }
-    }, [selectedGenre, navigateTo]);
+
+        getRecommendations();
+        
+    },[navigateTo])
 
     return (
         <div className='layout'>
             <Navbar />
             <main className='landing-main'>
-                <h1> Movie Recommender </h1>
 
-                <div className="intro-text">
-                    <p> Love a movie? Find your next favorite. </p>
-                    <p> Explore our collection of classics and modern films from the 20th and 21st centuries, tailored to your taste.
-                    </p>
+                <div className="hero-section">
+                    <h1 className='hero-title'> Movie Recommender </h1>
+                    <p className='hero-text'> Rate movies, build your watchlist, and get personalized recommendations. </p>
                 </div>
                
                 <form onSubmit={handleSearchSubmit}>
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} id="search" placeholder="Search..." />
-                    <button type="submit">Search</button>
+                    <input className='search-input' type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} id="search" placeholder="Search..." />
                 </form>
+
+
+                {/* Show recommended movies */}
+                <h2 className='landing-subheader'>Recommended For You </h2>
+
+                <div className='movie-row'>
+                    {recommendations.map(movie => (
+                        <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                </div>
 
             </main>
             <Footer />

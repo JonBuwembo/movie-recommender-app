@@ -7,11 +7,13 @@ import '../styles/movieDetails.css';
 import StarRating from '../components/StarRating/StarRating';
 import { Bookmark} from "lucide-react";
 import { useWatchlist } from '../useWatchlist';
+import { useAuth } from '../AuthContext';
 
 const MovieDetails = () => {
 
     const {movieIdParam} = useParams();
 
+    const {authFetch} = useAuth();
     const {addToWatchlist, removeFromWatchlist, watchlist} = useWatchlist();
 
     const [moviePoster, setMoviePoster] = react.useState('');
@@ -21,11 +23,50 @@ const MovieDetails = () => {
     const [movieRating, setMovieRating] = react.useState('');
     const [movieTitle, setMovieTitle] = react.useState('');
 
+
     const [recommendations, setRecommendations] = react.useState([]);
 
-    const [loading, setLoading] = react.useState(false);
+    const [watchStatus, setWatchedStatus] = react.useState(false);
 
-    const userId = JSON.parse(localStorage.getItem("user") || null);
+    const [numVotes, setNumVotes] = react.useState(0);
+    const [avgVote, setAvgVotes] = react.useState(0);
+    
+    const onWatchlist = watchlist.some(item => Number(item.movie_id) === Number(movieIdParam));
+    
+
+    react.useEffect(() => {
+        const fetchWatchStatus = async () => {
+            const response = await authFetch("http://localhost:5000/api/watched");
+            const data = await response.json();
+            console.log("watched data:", data);
+
+            const watchedIds = data.map(movie => movie.movie_id);
+
+            const isWatched = watchedIds.some(id => Number(id) == Number(movieIdParam));
+            setWatchedStatus(isWatched);
+        }
+        
+        fetchWatchStatus();
+
+    },[movieIdParam])
+
+
+    react.useEffect(() => {
+        const fetchVoteMetrics = async () => {
+            const response = await authFetch(`http://localhost:5000/api/votes/${movieIdParam}`)
+            const data = await response.json();
+
+            console.log(data)
+
+            setNumVotes(data.vote_count.toFixed(1))
+            setAvgVotes(Number(data.avg_rating).toFixed(2))
+        }
+
+        fetchVoteMetrics();
+    },[movieIdParam])
+
+
+    const [loading, setLoading] = react.useState(false);
 
     const fetchMovie = (movieId) => { 
         setLoading(true);
@@ -36,7 +77,7 @@ const MovieDetails = () => {
         const BASE_URL = process.env.NODE_ENV === 'production'? 
             `http://movie-recommender-backend.onrender.com`: `http://localhost:5000`;
 
-        fetch(`${BASE_URL}/api/details/${encodeURIComponent(movieId)}`)
+        authFetch(`${BASE_URL}/api/details/${encodeURIComponent(movieId)}`)
             .then(response => response.json())
             .then(data => {
                 setMoviePoster(data.movie.poster_url);
@@ -52,6 +93,30 @@ const MovieDetails = () => {
                 console.error('Error fetching movie details:', error);
                 setLoading(false);
             })
+    }
+
+    const setWatched = async (movieId) => {
+
+        try {
+            const options = {
+                method: 'POST',
+                body: JSON.stringify({
+                    "movieId" : movieId
+                })
+            }
+
+            const response = await authFetch("http://localhost:5000/api/watched", options)
+
+            if (!response.ok) {
+                console.log("unsuccessful in setting movie to complete status")
+                return
+            }
+
+            setWatchedStatus(true);
+
+        } catch (error) {
+            console.error('Error setting movie to complete:', error)
+        }
     }
     
 
@@ -81,8 +146,8 @@ const MovieDetails = () => {
                         <h2> {movieTitle} <span> ({movieReleaseYear})</span> </h2>
 
                         <div className="community-rating-pill">
-                            ⭐ {4.2}
-                            <span>(53 votes)</span>
+                            ⭐ {avgVote}
+                            <span>({numVotes} votes)</span>
                         </div>
 
                         {/* Movie Summary */}
@@ -107,7 +172,17 @@ const MovieDetails = () => {
                                  />
                             </div>
 
-                            <button className='watchlist-btn' onClick={() => addToWatchlist(userId, movieIdParam)}> <Bookmark size={20}/> Add to Watchlist </button>
+                            <div className='movie-actions'>
+
+                                <button className={`watchlist-btn ${onWatchlist? 'yes' : ''}`} onClick={() => addToWatchlist(movieIdParam)}> 
+                                    <Bookmark size={20}/> Add to Watchlist 
+                                </button>
+
+                                <button className={`completed-btn ${watchStatus ? 'yes' : ''}`} onClick={() => setWatched(movieIdParam)}> 
+                                    <Bookmark size={20}/> Completed 
+                                </button>
+                            </div>
+                           
                         </div>
 
                     </section>

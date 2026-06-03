@@ -50,3 +50,18 @@ class Genre(db.Model):
     name = db.Column(db.String(255), nullable=False)
 
     movies = db.relationship("Movie", secondary=movie_genres, back_populates="genres")
+
+class WatchedMovie(db.Model):
+
+    __tablename__ = "watched_movies"
+
+    watched_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey("movies.movie_id"), nullable=False)
+    watched_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id", "movie_id"
+        ),
+    )

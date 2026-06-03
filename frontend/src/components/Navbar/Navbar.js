@@ -1,17 +1,22 @@
 import react from 'react';
 import './Navbar.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGenre } from '../../GenreContext';
 import { useSearch } from '../../SearchContext';
 import { Clapperboard, Film, Search, House, LogOut, Bookmark, Bot, BookA } from "lucide-react";
+import { useAuth } from '../../AuthContext';
+import { Link } from 'react-router-dom';
 
 
 const Navbar = () => {
 
+    const {queryParam }= useParams();
     const {searchQuery, setSearchQuery} = useSearch();
     
     const {setSelectedGenre} = useGenre();
     const navigateTo = useNavigate();
+
+    const {logout} = useAuth();
 
     const [open, setOpen] = react.useState(false);
     const dropdownRef = react.useRef(null);
@@ -75,7 +80,7 @@ const Navbar = () => {
 
     const signOut = (event) => {
         event.preventDefault();
-        localStorage.removeItem('user');
+        logout()
         navigateTo("/");
     }
 
@@ -89,13 +94,13 @@ const Navbar = () => {
                 </a>
 
                 <ul className='nav-links'>
-                    <li> <a href="/home"> <House size={20} /> Home</a> </li>
+                    <li> <Link to="/home" className="nav-link"> <House size={20} /> Home</Link> </li>
                     <li className='dropdown' ref={dropdownRef}>
 
-                        <a href="/genres" onClick={toggleDropdown}>
+                        <Link className="nav-link" to="/genres" onClick={toggleDropdown}>
                             <Film size={20} /> 
                             Genres
-                        </a> 
+                        </Link> 
 
 
                         
@@ -103,7 +108,7 @@ const Navbar = () => {
                                 <ul className='dropdown-menu'>
                                     {genres.map(genre => (
                                         <li key={genre}> 
-                                            <a href={`/genres/${genre}`} 
+                                            <Link to={`/genres/${genre}`} className="nav-link"
                                             onClick={
                                                 (e) => {
                                                     e.preventDefault(); {/* needed so genre can actually be passed up */}
@@ -111,7 +116,7 @@ const Navbar = () => {
                                                 }
                                             }>
                                                 {genre} 
-                                            </a>
+                                            </Link>
                                         </li>
                                     ))}
                                 </ul>
@@ -121,17 +126,15 @@ const Navbar = () => {
                     </li>
 
                     <li> 
-                        <a href="/movies"> 
+                        <Link to="/movies" className="nav-link"> 
                             <Clapperboard size={20} /> 
                             Movies 
-                        </a> 
+                        </Link> 
                     </li>
-                    <li> <a href="/about"> <BookA size={20} /> About</a> </li>
+                    <li> <Link to="/about" className="nav-link"> <BookA size={20} /> About</Link> </li>
                     
-                    <li> <a href="#"> <Bot size={20} /> Ask</a></li>
+                    <li> <Link to="/movies/ask" className="nav-link"> <Bot size={20} /> Ask</Link></li>
                 </ul>
-
-
             </div>
 
             
@@ -154,7 +157,7 @@ const Navbar = () => {
             </form>
 
             <div className='nav-right'>
-                <li className='nav-links'> <a href={`/movies/watchlist/${userId}`}> <Bookmark size={20} />Watchlist</a></li>
+                <li> <Link to="/movies/watchlist" className="nav-link"> <Bookmark size={20} />Watchlist</Link></li>
 
                 <button className="signout-btn" onClick={signOut}>
                     <LogOut size={20} />

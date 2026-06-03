@@ -1,55 +1,80 @@
 /* landing.css */
 
 .landing-main {
-    background: #B7CECE;
+    background:
+        linear-gradient(
+            180deg,
+            #111827 0%,
+            #3b4f6a 100%
+        );
+
+
+    color: white;
     padding: 32px;
 
       /* Center everything */
     display: flex;
     flex-direction: column;
     align-items: center; 
+
+    /* Prevents wide monitors from spreading all contents of page*/
+    max-width: 1600px;
+
 }
 
-h1 {
-    font-size: 48px;
-    margin-bottom: 0px;
+.hero-section {
+    padding: 40px 0;
+}
+
+.hero-title {
+    font-size: 60px;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+
     /*center*/
     text-align: center;
 }
 
-.intro-text {
+.hero-text {
     max-width: 600px;
-    margin: 0 auto 40px auto;
-    font-size: 20px;
+    margin: 0 auto;
+    font-size: 1.2rem;
     line-height: 1.6;
     text-align: center;
     margin-bottom: 20px;
 }
 
 /*search*/
-input {
-    width: 700px;
-    padding: 15px;
+.search-input {
+    display: flex;
+    width: 750px;
+
     font-size: 20px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+    font-weight: 600;
+
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.06);
+
+    backdrop-filter: blur(20px);
+
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    color: rgb(184, 176, 176);
+    
+    transition: all 0.25s ease;
 }
 
-input:focus {
+.search-input:focus {
     outline: none;
-    border-color: #d8cfcf;
+    color: rgb(184, 176, 176);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
 }
 
-button {
-    padding: 15px 30px;
-    font-size: 20px;
-    margin-left: 10px;
-    border: none;
-    border-radius: 4px;
-    background-color: #1C0F13;
-    color: #F0EFF4;
-    cursor: pointer;
-}
 
 button:hover {
     background-color: #333;
@@ -91,3 +116,26 @@ button:active {
     cursor: pointer;
 }
 
+
+.movie-row {
+    display: flex; 
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 1rem;
+
+    scrollbar-width: none;
+}
+
+.movie-row::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+.landing-subheader {
+    align-self: flex-start;
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}

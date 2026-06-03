@@ -1,12 +1,41 @@
 import { FaStar } from 'react-icons/fa'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../../styles/movieDetails.css';
+import { useAuth } from '../../AuthContext';
 
 const StarRating = ({ movieId }) => {
 
     const [rating, setRating] = useState(0);
     const [hoverValue, setHoverValue] = useState(undefined);
+
+    const {authFetch} = useAuth();
+
     const userId = JSON.parse(localStorage.getItem('user') || "null");
+
+    useEffect(() => {
+        
+        // fetch rating for this current movie
+        const fetchRating = async (movieId) => {
+            try {
+            
+                const response = await authFetch(`http://localhost:5000/api/rating/${movieId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error("Failed to retrieve rating for this movie");
+                    return;
+                }
+
+                if (data.rating) setRating(data.rating);
+
+            } catch (error) {
+                console.error("Error fetching rating: ", error);
+            }
+        }
+
+        fetchRating(movieId)
+
+    }, [movieId])
 
     const handleMouseOverStar = (value) => {
         setHoverValue(value)
@@ -21,15 +50,11 @@ const StarRating = ({ movieId }) => {
 
         try {
             // api endpoint not yet setup, but table is created
-            const response = await fetch("http://localhost:5000/api/rating", {
+            const response = await authFetch("http://localhost:5000/api/rating", {
                 method: "POST",
-                headers: {
-                    "Content-Type" : "application/json"
-                },
                 body: JSON.stringify({
                     movieId: movieId,
-                    rating: value,
-                    userId: userId
+                    rating: value
                 })
             })
 

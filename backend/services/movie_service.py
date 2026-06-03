@@ -1,8 +1,9 @@
 from database.db_connection import get_db_connection
 from flask import jsonify, request
-from models.movie_model import Movie, Watchlist, Rating
+from models.movie_model import Movie, Watchlist, Rating, WatchedMovie
 from models.content_based import get_similar_movies
 from datetime import datetime, timezone
+from utils.auth_utils import get_current_user
 import app
 from app import db
 import math
@@ -221,9 +222,11 @@ def get_movie_details_service(movie_id):
         cursor.close()
 
 
-def get_watchlist_service(user_id):
+def get_watchlist_service():
     connection = None
     cursor = None
+
+    user_id = get_current_user(request)
 
     try:
         connection = get_db_connection()
@@ -266,13 +269,13 @@ def get_watchlist_service(user_id):
 
 
 
-def add_to_watchlist_service(user_id):
+def add_to_watchlist_service(movie_id):
 
     try:
         # access the movies
-        frontend = request.get_json()
-        movie_id = frontend.get("movie_id")
-        user_id_corr = frontend.get("user_id")
+        # frontend = request.get_json()
+        # movie_id = frontend.get("movie_id")
+        user_id = get_current_user(request)
 
         if not movie_id:
             return jsonify({"error":"movie_id is required"}), 400
@@ -283,13 +286,13 @@ def add_to_watchlist_service(user_id):
             return jsonify({"error" : "This movie cannot be found"}), 404
 
         # check if this movie is already in the watchlist for this user.
-        existing_entry = Watchlist.query.filter_by(user_id=user_id_corr, movie_id=movie_id).first()
+        existing_entry = Watchlist.query.filter_by(user_id=user_id, movie_id=movie_id).first()
 
         if existing_entry:
             return jsonify({"message" : "Movie already exists in watchlist for this user."}), 200
         
         # otherwise
-        new_watchlist_entry = Watchlist(user_id=user_id_corr, movie_id=movie_id)
+        new_watchlist_entry = Watchlist(user_id=user_id, movie_id=movie_id)
         
         db.session.add(new_watchlist_entry)
         db.session.commit()
@@ -302,11 +305,13 @@ def add_to_watchlist_service(user_id):
 
     except Exception as e:
         print(f"Error occurred adding to watchlist: {e}")
-        return jsonify({"error": f"Failed to add movie to watchlist for user with id: {user_id}"})
+        return jsonify({"error": f"Failed to add movie to watchlist"})
 
 
 
-def remove_from_watchlist_service(user_id, movie_id):
+def remove_from_watchlist_service(movie_id):
+
+    user_id = get_current_user(request)
 
     try:
         watchlist_entry = Watchlist.query.filter_by(user_id=user_id, movie_id=movie_id).first()
@@ -328,7 +333,7 @@ def remove_from_watchlist_service(user_id, movie_id):
     except Exception as e:
         db.session.rollback()
         print(f"Error occurred removing from watchlist: {e}")
-        return jsonify({"error" : f"Failed to remove movie from watchlist for user with id: {user_id}"})
+        return jsonify({"error" : f"Failed to remove movie from watchlist"})
   
 
 def handle_rating_service():
@@ -337,8 +342,10 @@ def handle_rating_service():
         frontend = request.get_json()
 
         movie_id = frontend.get("movieId")
-        user_id = frontend.get("userId")
         rating = frontend.get("rating")
+
+        user_id = get_current_user(request)
+       
 
         rating_entry = Rating.query.filter_by(user_id=user_id, movie_id=movie_id).first() # object
 
@@ -346,6 +353,7 @@ def handle_rating_service():
             #  update the movie rating with a new rating and then, update updated_at field, then RETURN
             rating_entry.rating = rating
             rating_entry.updated_at = datetime.now(timezone.utc)
+            db.session.commit()
             return jsonify({
                 "message" : "rating successfully updated"
             })
@@ -363,3 +371,101 @@ def handle_rating_service():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error" : f"Failed to add rating: {e}" })
+
+
+def set_watched_service():
+
+    # get movie_id
+    frontend = request.get_json()
+
+    movie_id = frontend.get("movieId")
+    # get user_id
+    user_id = get_current_user(request)
+
+    movie_status = WatchedMovie.query.filter_by(user_id=user_id, movie_id=movie_id).first()
+
+    if movie_status:
+        return jsonify({"message" : "User has already watched this movie! "}), 409
+
+    movie_status = WatchedMovie(user_id=user_id, movie_id=movie_id)
+    db.session.add(movie_status)
+    db.session.commit()
+
+    return jsonify({"message" : "Success! This movie has been set to watch!"}), 201
+     
+
+def get_watched_service():
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        user_id = get_current_user(request)
+
+        query = """
+        SELECT
+            m.movie_id,
+            m.title,
+            m.overview,
+            m.release_year,
+            m.rating_avg,
+            m.poster_url
+        FROM watched_movies wm
+        JOIN movies m ON wm.movie_id = m.movie_id
+        WHERE wm.user_id = %s
+        """
+        cursor.execute(query, (user_id,))
+        rows = cursor.fetchall()
+
+        movies = []
+
+        for row in rows:
+
+            movie = {
+                "movie_id" : row["movie_id"],
+                "title" : row["title"],
+                "overview": row["overview"],
+                "release_year" : row["release_year"],
+                "poster_url" : row["poster_url"]
+            }
+
+            movies.append(movie)
+
+        return jsonify(movies), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error" : f"Failed to retrieve all watched movies {e}" })
+    finally:
+        connection.close()
+        cursor.close()
+
+def get_rating_service(movie_id):
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        user_id = get_current_user(request)
+
+        query = """
+        SELECT
+            rating,
+            movie_id
+        FROM ratings
+        WHERE user_id = %s AND movie_id = %s
+        """
+
+        cursor.execute(query, (user_id, movie_id))
+
+        rating = cursor.fetchone()
+
+        return jsonify(rating), 201
+
+    except Exception as e:
+        print(f"Error {e}")
+        return jsonify({"error" : f"Failed to retrieve rating for this movie {e}"})
+

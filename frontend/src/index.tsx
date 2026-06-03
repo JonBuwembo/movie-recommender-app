@@ -6,19 +6,22 @@ import reportWebVitals from './reportWebVitals';
 import { GenreProvider } from './GenreContext';
 import { SearchProvider } from './SearchContext';
 import { WatchlistProvider } from './WatchlistContext';
+import { AuthProvider } from './AuthContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <GenreProvider>
-      <WatchlistProvider>
-        <SearchProvider>
-          <App />
-        </SearchProvider>
-      </WatchlistProvider>
-    </GenreProvider>
+    <AuthProvider>
+      <GenreProvider>
+        <WatchlistProvider>
+          <SearchProvider>
+              <App />
+          </SearchProvider>
+        </WatchlistProvider>
+      </GenreProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
 

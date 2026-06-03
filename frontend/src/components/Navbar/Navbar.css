@@ -10,18 +10,32 @@
     padding: 1rem 2rem;
     font-family: 'Inter', Arial;
     text-decoration: none;
+
+  
+    flex-wrap: nowrap;
+
+    scrollbar-width: none;
 }
+
+
+.movie-row::-webkit-scrollbar {
+    display: none;
+}
+
+
 
 .nav-left {
     display: flex;
     gap: 2rem;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .nav-right {
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    flex-shrink: 0;
 }
 
 .nav-links {
@@ -41,14 +55,15 @@
 
 .nav-search {
     display: flex;
-    flex: 1;
     gap: 1.5rem;
     list-style: none;
     justify-content: center;
 }
 
+
 .nav-search input {
-    width: 230px;
+    max-width: 230px;
+    width: 100%;
     padding: 0.7rem 1rem;
 }
 
@@ -60,11 +75,12 @@
     white-space: nowrap;
 }
 
-.nav-links > li > a,
-.nav-right > li > a,
+.nav-links > li > .nav-link,
+.nav-right > li > .nav-link,
 .signout-btn {
 
-    display: inline-block;
+    flex-shrink: 0;
+    position: sticky;
 
     color: #F0EFF4;
     font-size: 18px;
@@ -90,8 +106,21 @@
         opacity 0.2s ease;
 }
 
-.nav-links > li > a:hover,
-.nav-right > li > a:hover,
+.signout-btn {
+    color:#1C0F13 !important;
+    background-color: #f7fdff !important;
+    background: 
+        linear-gradient(
+            145deg,
+            #f8f9fa 0%,
+            #dff7a3 40%,
+            #aaf257 100%
+        );
+    border: none;
+}
+
+.nav-links > li > .nav-link:hover,
+.nav-right > li > .nav-link:hover,
 .signout-btn:hover {
     background-color:#4d4141;
     transform: scale(1.05);
@@ -124,7 +153,7 @@
     padding: 8px 15px;
 }
 
-.dropdown-menu li a {
+.dropdown-menu li .nav-link {
     text-decoration: none;
 
     color: rgb(46, 40, 40);

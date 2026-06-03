@@ -1,5 +1,5 @@
 import react, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import '../styles/global.css';
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
@@ -9,16 +9,23 @@ import { useGenre } from '../GenreContext';
 import { useSearch } from '../SearchContext';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useWatchlist } from '../useWatchlist';
+import { useAuth } from '../AuthContext';
 
 
 const MoviesDisplay = () => {
-    const {genreParam, userId} = useParams(); //read url for other pages
+    const {genreParam} = useParams(); //read url for other pages
     const {queryParam} = useParams();
+
+    const location = useLocation();
+    const isWatchlist = location.pathname.includes("/movies/watchlist");
+
+
+    const {watchlist} = useWatchlist();
+    const {authFetch, userId} = useAuth();
 
     const [displayedMovies, setDisplayedMovies] = react.useState([]);
     const [hasMore, setHasMore] = react.useState(true);
-
-    const { watchlist } = useWatchlist();
+    const [hasFetched, setHasFetched] = react.useState(false);
 
     const [page, setPage] = react.useState(1); // Improving performance of application
 
@@ -26,14 +33,12 @@ const MoviesDisplay = () => {
         top_results: [],
         similar_movies: []
     });
-
-    useEffect(() => { console.log('Displayed movies updated: ', displayedMovies); }, [displayedMovies]);
     
 
     const {selectedGenre, setSelectedGenre} = useGenre();
 
     const [loading, setLoading] = react.useState(false);
-    const {searchQuery, setSearchQuery} = useSearch();
+    const {setSearchQuery} = useSearch();
 
     const fetchMoviesBySearch = (query) => {
         setSearchQuery('');
@@ -43,31 +48,32 @@ const MoviesDisplay = () => {
         }
 
         setLoading(true);
-        console.log('Fetching movies for search query:', query);
         const fetchURL = `http://localhost:5000/api/search/${encodeURIComponent(query.trim())}`;
 
-        fetch(fetchURL)
+        authFetch(fetchURL)
             .then(response => response.json())
             .then(data => {
                 setSearchResults(data)
                 setLoading(false);
+                setHasFetched(true);
             })
             .catch(error => {
                 console.error('Error fetching movies:', error);
                 setLoading(false);
+                setHasFetched(true);
             });
     };
 
 
     const fetchMovies = react.useCallback((genre, page = 1) => {
         setLoading(true);
-       
 
         const fetchURL = genre 
         ? `http://localhost:5000/api/movies/${genre}?page=${page}&limit=48` 
         : `http://localhost:5000/api/movies?page=${page}&limit=48`;
+     
 
-        fetch(fetchURL)
+        authFetch(fetchURL)
             .then(response => response.json())
             .then(data => {
 
@@ -90,14 +96,13 @@ const MoviesDisplay = () => {
     }, [setSelectedGenre]);
 
 
-    const fetchWatchlist = (userId) => {
-        setSelectedGenre("watchlist");
+    const fetchWatchlist = react.useCallback(() => {
+        setSelectedGenre(null);
         setLoading(true);
-        const fetchURL = `http://localhost:5000/api/watchlist/${userId}`
+        const fetchURL = "http://localhost:5000/api/watchlist"
 
-        
 
-        fetch(fetchURL)
+        authFetch(fetchURL)
             .then(response => response.json())
             .then(data => {
                 setDisplayedMovies(data);
@@ -108,7 +113,8 @@ const MoviesDisplay = () => {
                 setDisplayedMovies([]);
                 setLoading(false);
             })
-    }
+    }, [authFetch, setSelectedGenre])
+
 
     // Initial page load only
     useEffect(() => {
@@ -117,13 +123,13 @@ const MoviesDisplay = () => {
         setHasMore(true);
         setSearchResults({ top_results: [], similar_movies: [] })
 
-        if (userId) {
-            fetchWatchlist(userId);
+        if (isWatchlist) {
+            fetchWatchlist();
         } else {
             fetchMovies(genreParam, 1);
         }
 
-    }, [genreParam, userId, fetchMovies]);
+    }, [genreParam, isWatchlist]);
 
 
     useEffect(() => {
@@ -135,116 +141,100 @@ const MoviesDisplay = () => {
     useEffect(() => {
         if (!hasMore) return;
         if (page === 1) return;
-        if (userId) return; // no paginating on watchlist!
+        if (isWatchlist) return; // no paginating on watchlist!
 
         fetchMovies(genreParam, page);
     }, [page, genreParam, fetchMovies])
 
     useEffect(() => {
         if (queryParam) {
-            console.log('Fetching a particular movie:', queryParam);
             fetchMoviesBySearch(queryParam);
         }
     }, [queryParam]);
 
-    // // For dynamic/live update of watchlist upon deletions.
-    // useEffect(() => {
-    //     if (selectedGenre === "watchlist") {
-    //         // "movie" refers to movie in displayedMovies list
-    //         // "item" is the alias name for a movie in the watchlist list
-    //         // compare ids between these two lists, leave only ones that match
-
-            
-    //         setDisplayedMovies(list => list.filter(movie => watchlist.some(item => item.movie_id === movie.movie_id )))
-    //     }
-    // }, [watchlist])
-
-    useEffect(() => {
-        console.log("watchlist contents:", watchlist);
-        console.log("displayedMovies contents:", displayedMovies);
-    }, [watchlist, displayedMovies]);
 
     function renderMovies() {
 
         
-        const moviesToDisplay = selectedGenre === "watchlist"
+        const moviesToDisplay = isWatchlist
             ? displayedMovies.filter(movie => watchlist.some(item => Number(item.movie_id) === Number(movie.movie_id)))
             : displayedMovies;
 
-        console.log("moviesToDisplay value: ", moviesToDisplay);
-
-        console.log("render movies called")
         if (loading && displayedMovies.length === 0) {
             return <p>Loading movies... </p> 
         }
-        
-        if (searchResults.top_results.length > 0 && queryParam) {
+
+        // 2. Search mode
+        if (queryParam) {
+            if (!hasFetched) return <p>Loading movies...</p>
+
+            if (searchResults.top_results.length === 0) {
+                return <h3>Whoops!! No results found for "{queryParam}".</h3>
+            }
+
             return (
                 <>
-                    <h3 className="center"> Top Results </h3>
-                    <div className='movies-display'>
-                        {searchResults.top_results.map(
-                            movie => (
-                            <MovieCard 
-                                key={movie.movie_id} 
-                                movie={movie} />
+                    <h3 className="center">Top Results</h3>
+                    <div className="movies-display">
+                        {searchResults.top_results.map(movie => (
+                            <MovieCard key={movie.movie_id} movie={movie} />
                         ))}
                     </div>
-                    <h3 className='center'> Similar Movies </h3>
-                    <div className='movies-display'>
-                        {searchResults.similar_movies.map(
-                            movie => (<MovieCard key={movie.movie_id} movie={movie} />
+                    <h3 className="center">Similar Movies</h3>
+                    <div className="movies-display">
+                        {searchResults.similar_movies.map(movie => (
+                            <MovieCard key={movie.movie_id} movie={movie} />
                         ))}
                     </div>
                 </>
-            ); 
-        } else if (searchResults.top_results.length === 0 && queryParam) {
-            return <h3>Whoops!! No results found for "{queryParam}".</h3>;
-        } else if (moviesToDisplay.length > 0) {
-            return (
-                <InfiniteScroll
-                    dataLength={moviesToDisplay.length}
-                    next={() => setPage(prev => prev + 1)}
-                    hasMore={hasMore}
-                    endMessage={<p>No more movies.</p>}
-                >
-                    <div className='movies-display'>
-                        {moviesToDisplay.map(movie => (
-                            <MovieCard
-                                key={movie.movie_id}
-                                movie={movie}
-                                mode={selectedGenre === "watchlist" ? "watchlist" : "normal"}
-                            />
-                        ))}
-                    </div>
-                </InfiniteScroll>
-            );
+            )
+        }
 
-        } else if (selectedGenre === "watchlist" && moviesToDisplay.length === 0) {
-            return <h3> No movies found in Your Watchlist</h3>
-        } else if (selectedGenre && moviesToDisplay.length === 0) {
-            return <h3>No movies found for {selectedGenre}.</h3>
-        } 
+        // 3. Normal / watchlist mode
+        if (moviesToDisplay.length === 0) {
+            return isWatchlist
+                ? <h3>No movies found in your Watchlist.</h3>
+                : selectedGenre
+                    ? <h3>No movies found for {selectedGenre}.</h3>
+                    : <p>No movies available.</p>
+        }
 
-        return <p>No movies available.</p>
+        return (
+            <InfiniteScroll
+                dataLength={moviesToDisplay.length}
+                next={() => setPage(prev => prev + 1)}
+                hasMore={hasMore}
+                endMessage={<p>No more movies.</p>}
+            >
+                <div className="movies-display">
+                    {moviesToDisplay.map(movie => (
+                        <MovieCard
+                            key={movie.movie_id}
+                            movie={movie}
+                            mode={isWatchlist ? "watchlist" : "normal"}
+                        />
+                    ))}
+                </div>
+            </InfiniteScroll>
+        )
     }
 
     return(
         <div className='layout'>
             <Navbar />
             
-            <main>
+            <main className='movies-main'>
                 {queryParam && <h2 />}
 
-                {!queryParam && selectedGenre && selectedGenre !== "watchlist" && (
+                {!queryParam && selectedGenre && !isWatchlist && (
                     <h2 className='center'>Movies in {selectedGenre} genre</h2>
                 )}
 
-                {!queryParam && !selectedGenre && (
+                {!queryParam && !selectedGenre && !isWatchlist && (
                     <h2 className='center'>Browse your favorite vintage movies here!</h2>
                 )}
 
-                {!queryParam && selectedGenre === "watchlist" && (
+                {!queryParam && isWatchlist && (
                     <h2 className='center'>Your Watchlist</h2>
                 )}
                 

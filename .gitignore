@@ -4,6 +4,7 @@ frontend/.gitignore
 
 # Python virtual environment
 .venv/
+.venv311/
 
 # Environment variables in other files
 .env
