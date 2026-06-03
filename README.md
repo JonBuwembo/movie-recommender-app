@@ -24,4 +24,4 @@ npm start
 ---
 ## Tech Stack
 - Frontend: React.js
-- Backend: Flask Frameworks
+- Backend: Flask Frameworks, SQLAlchemy
