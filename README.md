@@ -11,7 +11,7 @@ Navigate to the backend folder to run the flask server:
 
 ```bash
 cd backend
-python app.py
+flask run
 ```
 ---
 ## Run Frontend
