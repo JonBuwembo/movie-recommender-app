@@ -80,9 +80,16 @@ const Register = () => {
 
     return (
         <div>
+
+            <div className="register-bg">
+                 <img src="/images/login-image.jpg" alt="background" className="bg-img" />
+            </div>
+
+            <div className="register-overlay" />
+
             <div className='register-wrapper'>
                 <form className="register-form" onSubmit={registerUser}>
-                    <h2> Register Below </h2>
+                    <h2> Create account </h2>
 
 
                     <p className="error" id="username"></p>

@@ -16,7 +16,7 @@ ALGORITHM = os.getenv("ALGORITHM")
 def create_access_token(user_id: int):
     payload = {
         "user_id" : user_id,
-        "exp" : datetime.utcnow() + timedelta(hours=7)
+        "exp" : datetime.utcnow() + timedelta()
     }
 
     token = jwt.encode(
@@ -46,6 +46,8 @@ def get_current_user(request):
         return payload["user_id"]
 
     except jwt.ExpiredSignatureError:
+        print("Expired token!")
         abort(401, description="Token expired")
     except jwt.InvalidTokenError:
+        print("Invalid Token!")
         abort(401, description="Invalid token")

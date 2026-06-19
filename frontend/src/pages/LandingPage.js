@@ -20,6 +20,10 @@ const LandingPage = () => {
     const {authFetch} = useAuth();
 
     const [recommendations, setRecommendations] = React.useState([]);
+    const [becauseURecs, setBecauseURecs] = React.useState([]); 
+    const [movieTitle , setMovieTitle] = React.useState("");
+
+
     const handleSearchSubmit = (event) => {
         event.preventDefault();
 
@@ -33,26 +37,67 @@ const LandingPage = () => {
     React.useEffect(() => {
 
         const getRecommendations = async () => {
+            console.time("recommendations");
 
             try {
-                const response = await authFetch("http://localhost:5000/api/recommendations");
+             
+                const response = await authFetch("http://localhost:5000/api/recommendations")
+                .catch(error => {
+                    if (error.message === "Unauthorized") {
+                        return;
+                    }
+
+                    console.error(error);
+                });
+
+                console.timeEnd("authFetch");
                 const data = await response.json();
 
                 if(!response.ok) {
-                    console.log("Failed to fetch homepage recommendations.");
+                    console.log("Failed to fetch homepage collaberative recommendations.");
                     return;
                 }
 
                 setRecommendations(data.recommendations.recommendations);
+                console.timeEnd("recommendations");
 
             } catch (err) {
                 console.error("Error with recommendations:", err);
             }
-           
-
         }
 
+        const getBecauseUWatchedRecommendations = async () => {
+            // console.time("because-you-watched");
+
+            try {
+                const response = await authFetch("http://localhost:5000/api/because-you-watched")
+                .catch(error => {
+                    if (error.message === "Unauthorized") {
+                        return;
+                    }
+
+                    console.error(error);
+                });
+                const data = await response.json()
+
+                if (!response.ok) {
+                    console.log("Failed to fetch homepage collaberative recommendations.");
+                    return;
+                }
+                
+                setMovieTitle(data.movie_title);
+                setBecauseURecs(data.recs);
+
+                // console.timeEnd("because-you-watched");
+
+            } catch (error) {
+                console.log("Failed to fetch movie similarity recommendations for homepage")
+            }
+        }
+
+        
         getRecommendations();
+        getBecauseUWatchedRecommendations();
         
     },[navigateTo])
 
@@ -76,6 +121,13 @@ const LandingPage = () => {
 
                 <div className='movie-row'>
                     {recommendations.map(movie => (
+                        <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                </div>
+
+                <h2 className='landing-subheader'>Because you watched {movieTitle} </h2>
+
+                <div className='movie-row'>
+                    {becauseURecs.map(movie => (
                         <MovieCard key={movie.movie_id} movie={movie} /> ))}
                 </div>
 

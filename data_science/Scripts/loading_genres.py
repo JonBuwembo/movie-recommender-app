@@ -2,9 +2,11 @@ import os
 import time
 import requests
 import sys
+import re
 
 from pathlib import Path
 from dotenv import load_dotenv
+from rapidfuzz import fuzz
 
 dotenv_path = Path(__file__).parent / ".env"
 
@@ -19,7 +21,7 @@ from database.db_connection import get_db_connection
 
 GENRE_NAME_MAP = {
     "Science Fiction": "Sci-Fi",
-    "Family": "Children's",
+    "Family": "Children's and Family",
     "Crime": "Crime",
     "Fantasy": "Fantasy",
     "War": "War",
@@ -79,10 +81,18 @@ def tmdb_get(path, params=None, retries=3):
         except requests.exceptions.RequestException as e:
             print(f"TMDB request error on attempt {attempt}/{retries}: {e}", flush=True)
             time.sleep(2)
+    return None
 
 def load_tmdb_genres():
     data = tmdb_get("/genre/movie/list", {"language": "en-US"})
+
+    if not data:
+        raise RuntimeError("Failed to load TMDB genre list.")
+
     return {genre["id"] : genre["name"] for genre in data["genres"]}
+
+def simplify_title(title):
+    return re.split(r'[:\-|]+', title)[0].strip()
 
 def search_movies(title, release_year):
     params = {
@@ -103,10 +113,63 @@ def search_movies(title, release_year):
 
     results = data.get("results", [])
 
+    # print(f"TMDB returned {len(results)} results")
+
+    best_score = 0
+    best_match = None
+
+    if not results and release_year:
+        params.pop("primary_release_year", None)
+        data = tmdb_get("/search/movie", params)
+
+        if data:
+            results = data.get("results", [])
+
     if not results:
+        
+        simplified = simplify_title(title)
+        # print(f"{simplified}")
+
+        if simplified != title:
+            params["query"] = simplified
+            data = tmdb_get("/search/movie", params)
+
+            if not data:
+                return None
+
+            results = data.get("results", [])
+
+    for movie in results:
+        tmdb_title = movie.get("title", "")
+
+        score = fuzz.WRatio(title.lower(), tmdb_title.lower())
+
+        # print("")
+        # print(
+        #     f"Comparing '{title}' "
+        #     f"to '{tmdb_title}' "
+        #     f"-> {score}"
+        # )
+        # print("")
+
+        if score > best_score:
+            best_score = score
+            best_match = movie
+    
+    # print(f"Movie score {best_score}")
+    if best_score < 60:
         return None
     
-    return results[0]
+    # print("")
+    # print("********************")
+    # print(f"BEST match: {best_match}")
+    # print("********************")
+    # print("")
+    # print("********************")
+    # print(results)
+    # print("********************")
+    # print("")
+    return best_match
 
 def ensure_genre(cursor, genre_name):
     cursor.execute(
@@ -146,6 +209,7 @@ def main(limit=75000):
         WHERE mg.movie_id IS NULL
             AND m.title IS NOT NULL
             AND TRIM(m.title) <> ''
+            AND m.movie_id >= 300000
         ORDER BY m.movie_id
         LIMIT %s;
         """,
@@ -157,8 +221,14 @@ def main(limit=75000):
     print(f"Found {len(movies)} movies missing genres.")
 
     matched = 0
+    not_matched = 0
+    processed = 0
 
+    
     for movie in movies:
+
+        processed += 1
+
         movie_id = movie["movie_id"]
         title = movie["title"]
         release_year = movie["release_year"]
@@ -169,12 +239,32 @@ def main(limit=75000):
 
             if not result:
                 print(f"No TMDB match: {title} ({release_year})")
+                not_matched += 1
                 continue
 
             genre_ids = result.get("genre_ids", [])
 
+
+            cursor.execute("SELECT genre_id FROM genres WHERE name = %s", ("Other",))
+            other_genre_id = cursor.fetchone()["genre_id"] # get the id of that entry
+
             if not genre_ids:
-                print(f"No genres found for {title}")
+
+                # add this movie to other category
+                cursor.execute(
+                    """
+                    INSERT INTO "MovieGenres" (movie_id, genre_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING;
+                    """,
+                    (movie_id, other_genre_id)
+                )
+                print(f"Rows inserted: {cursor.rowcount}")
+
+                print(f"Movie was found but No genres found for {title}, added to 'Other' category.")
+
+                matched += 1
+
                 continue
 
             for tmdb_genre_id in genre_ids:
@@ -207,30 +297,40 @@ def main(limit=75000):
                     """,
                     (movie_id, db_genre_id)
                 )
+                print(f"Rows inserted: {cursor.rowcount}")
             
             matched += 1
             print(f"Added genres for {title}: {[tmdb_genres[g] for g in genre_ids if g in tmdb_genres]}")
 
-            if matched % 100 == 0:
-                connection.commit()
-                print("---------------------------------------------------------------------")
-                print(f"********Saving progress for 100 movies! Successfully matched {matched} movies so far!**********")
-                print("---------------------------------------------------------------------")
-
-            time.sleep(1.25)
+            time.sleep(0.25)
 
         except Exception as e:
             print(f"Error on {title}: {e}")
-            connection.rollback()
-            continue
 
-    cursor.close()
-    connection.commit()
-    connection.close()
+            try:
+                connection.rollback()
+            except Exception:
+                print("Rollback failed, database must have disconnected")
+            continue
+        finally:
+            if processed % 100 == 0:
+                connection.commit()
+                print("---------------------------------------------------------------------")
+                print(f"******** Processed: {processed}")
+                print(f"********{not_matched} movies were not found so far.")
+                print(f"Success Rate: {matched / (processed):.2%}")
+                print("---------------------------------------------------------------------")
+
+
+    try:
+        connection.commit()
+    finally:
+        cursor.close()
+        connection.close()
     
 
     print(f"Finished! Successfully matched {matched}/{len(movies)} movies!")
 
 
 if __name__ == "__main__":
-    main(limit=75000)
+    main(limit=200000)

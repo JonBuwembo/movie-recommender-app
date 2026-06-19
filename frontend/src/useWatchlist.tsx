@@ -12,7 +12,17 @@ export const useWatchlist = () => {
             try {
                 const response = await authFetch(`http://localhost:5000/api/watchlist/${movieId}`, { 
                     method: "POST"
-                })
+                }).catch(error =>
+                    {
+                        if (error.message === "Unauthorized") {
+                            return;
+                        }
+
+                        console.log(error)
+                    }
+                )
+
+                if (!response) return;
 
                 if (!response.ok) {
                     console.log("Failed to add movie to watchlist!")
@@ -24,8 +34,11 @@ export const useWatchlist = () => {
 
                 setWatchlist(prev => [...prev, {movie_id: movieId}]);
 
-            } catch (err) {
-                console.error("Failed to add from watchlist", err)
+            } catch (error) {
+                if (error instanceof Error && error.message === "Unauthorized") {
+                   return;
+                }
+                console.error(error)
             }
 
         }
@@ -37,7 +50,17 @@ export const useWatchlist = () => {
                     `http://localhost:5000/api/watchlist/${movieId}`, {
                         method: "DELETE"
                     }
+                ).catch(error =>
+                    {
+                        if (error.message === "Unauthorized") {
+                            return;
+                        }
+
+                        console.log(error)
+                    }
                 )
+
+                if (!response) return;
     
                 if (!response.ok) {
                     console.log("Failed to remove movie!");
@@ -46,9 +69,12 @@ export const useWatchlist = () => {
     
                 setWatchlist(prev => prev.filter(item => item.movie_id !== movieId));
 
-    
-            } catch (err) {
-                console.error("Failed to remove from watchlist", err)
+            } catch (error) {
+                if (error instanceof Error && error.message === "Unauthorized") {
+                    return;
+                }
+
+                console.error(error);
             }
         }
 

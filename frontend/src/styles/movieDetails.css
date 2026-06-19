@@ -154,7 +154,101 @@
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     padding-top: 32px !important;
     padding: 20px !important;
-    margin-top: 30px;
+    background: #0b0f19;
+}
+
+.similar-title {
+    color: white;
+}
+
+.similar-wrapper {
+    position: relative;
+}
+.similar-container {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 4px;
+    scroll-snap-type:x mandatory;
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    scroll-behavior: smooth;
+}
+
+/* For removing horizontal scrollbar for chrome, safari, and Edge*/
+.similar-container::-webkit-scrollbar {
+  display: none;
+}
+
+
+.no-poster-screen {
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+    padding: 1rem;
+
+    background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #334155 100%
+    );
+
+    color: white;
+    border-radius: 8px;
+}
+
+.no-poster-screen h2 {
+    margin: 0;
+    font-size: 1.95rem !important;
+    font-weight: 900;
+}
+
+.scroll-btn {
+    
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    font-size: 20px;
+    width: 70px;
+    height: 50px;
+    border-radius: 10%;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.scroll-btn.left {
+    left: 5px;
+    align-items: center;
+}
+
+.scroll-btn.right {
+    right: 5px;
+}
+
+.scroll-btn.left, .scroll-btn.right {
+    font-size: 4rem;
+    transition: all 0.25s ease;
+}
+
+.scroll-btn:hover {
+    transform: translateY(-50%) scale(1.15);
+    background: rgba(0,0,0,0.9);
 }
 
 .movie-details-info label {

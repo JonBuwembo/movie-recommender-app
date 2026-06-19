@@ -58,7 +58,11 @@ const MoviesDisplay = () => {
                 setHasFetched(true);
             })
             .catch(error => {
-                console.error('Error fetching movies:', error);
+                if (error.message === "Unauthorized") {
+                    return;
+                }
+
+                console.error(error);
                 setLoading(false);
                 setHasFetched(true);
             });
@@ -81,15 +85,20 @@ const MoviesDisplay = () => {
 
                 setDisplayedMovies(prev => page === 1 ? data : [...prev, ...data]);
 
-                // just added this.
+                // Important lines of code
                 if (genre) setSelectedGenre(genre);
+                if (!genre) setSelectedGenre("");
 
                 setLoading(false);
             })
             .catch(error =>{
-                console.error('Error fetching movies:', error);
+                if (error.message === "Unauthorized") {
+                    return;
+                }
+
+                console.error(error);
                 setDisplayedMovies([]);
-                setSelectedGenre(genre);
+                setSelectedGenre("");
                 setLoading(false);
             });
 
@@ -109,12 +118,15 @@ const MoviesDisplay = () => {
                 setLoading(false);
             })
             .catch(error =>  {
-                console.error("Error fetching watchlist:", error);
+                if (error.message === "Unauthorized") {
+                    return;
+                }
+
+                console.error(error)
                 setDisplayedMovies([]);
                 setLoading(false);
             })
     }, [authFetch, setSelectedGenre])
-
 
     // Initial page load only
     useEffect(() => {

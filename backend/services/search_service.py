@@ -22,7 +22,7 @@ def safe_number(value, default=0):
 
 
 def search_movies_services(movie):
-    print(f"Search route hit! movie = {movie}")
+  
     conn = None
     cursor = None
 

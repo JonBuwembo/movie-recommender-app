@@ -5,7 +5,9 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: #f0f0f0;
+
+    position: relative;
+    z-index: 2;
 }
 
 .register-wrapper h2 {
@@ -16,17 +18,46 @@
     margin-bottom: 4px;
 }
 
+.register-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+.bg-image {
+    height: 100vh;
+    width: 100vw;
+    object-fit: cover;
+}
+
+.register-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: radial-gradient(
+        circle at center,
+        rgba(0,0,0,0.3),
+        rgba(0,0,0,0.95)
+    );
+
+    z-index: 1;
+}
+
 .register-wrapper form {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 
-    border: 1px solid rgb(129, 120, 120);
+    border: 1px solid rgb(255, 255, 255, 0.08);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 
     border-radius: 15px;
     padding: 35px 25px;
-    background-color:#fdfdfd;
+  
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    color: white;
 }
 
 .register-wrapper form input {

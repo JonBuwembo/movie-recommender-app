@@ -1,20 +1,19 @@
 from database.db_connection import get_db_connection
 from models.content_based import get_similar_movies
+from werkzeug.exceptions import HTTPException
 from flask import jsonify, request
 import app
 from app import db
 import math
 import numpy as np
+import time
 
 from pathlib import Path
 import joblib
 
 from models.movie_model import (WatchedMovie, Rating)
-
-
-print("recommendations importing")
+from services.movie_service import safe_number
 from utils.auth_utils import ( get_current_user )
-print("Auth imported")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,13 +27,9 @@ user_path = (
     BASE_DIR / "models" / "rec_models" / "user_map.pkl"
 )
 
-print("loading svd")
+
 model_data = joblib.load(model_path)
-
-print("loading movie_map")
 movie_map = joblib.load(movie_path)
-
-print("loading user_map")
 user_map = joblib.load(user_path)
 
 # from svd.pkl
@@ -197,22 +192,13 @@ def get_rating_metrics_service(movie_id):
             "vote_count" : results["vote_count"]
         })
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error getting metrics: {e}")
         return jsonify({"error" : "metrics for rating have failed to be captured"})
 
 
-def get_similar_movies_service(movie_id):
-
-    # pull from similarity matrix
-    top_recommendations = get_similar_movies(movie_id, 10, offset=0)
-
-    return top_recommendations
-
-    # uses get_movie_lookup to get appropriate movie metadata.
-
-
-    pass
 def get_movie_lookup():
 
     connection = get_db_connection()
@@ -265,3 +251,87 @@ def get_movie_lookup():
         connection.close()
         cursor.close()
 
+
+def because_you_watched_service():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        user = get_current_user(request=request)
+
+        if not user:
+            return jsonify({"Error" : "Cannot identify current user"})
+
+        query = """
+
+        SELECT
+            m.movie_id,
+            m.title,
+            m.overview,
+            m.release_year,
+            m.poster_url,
+            STRING_AGG(g.name, ', ') AS genre
+        FROM movies m
+        JOIN watched_movies wm 
+            ON m.movie_id = wm.movie_id
+        JOIN "MovieGenres" mg
+            ON m.movie_id = mg.movie_id
+        JOIN genres g
+            ON mg.genre_id = g.genre_id
+        WHERE wm.user_id = %s
+        GROUP BY
+            m.movie_id,
+            m.title,
+            m.overview,
+            m.release_year,
+            m.poster_url,
+            wm.watched_at
+        ORDER BY
+            wm.watched_at DESC
+        LIMIT 1;
+        """
+
+        start = time.time()
+        cursor.execute(query, (user,))
+        movie = cursor.fetchone()
+        print(f"Time spend on query: ", time.time() - start)
+
+
+        start = time.time()
+        top_recommendations = get_similar_movies(movie["movie_id"], 10, offset=0)
+        print(f"Time to get recommendations: ", time.time() - start)
+
+        for rec in top_recommendations:
+            rec['rating_avg'] = safe_number(rec.get('rating_avg'))
+            rec['release_year'] = safe_number(rec.get('release_year'))
+            if rec['overview'] is None:
+                rec['overview'] = "No overview available."
+
+        return jsonify({
+            "movie_title": movie["title"],
+            "recs" : top_recommendations
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        connection.close()
+        cursor.close()
+
+
+# Exclusively for the chatbot
+def get_similar_movies_service(movie_id, number_of_movies):
+
+    similar_movies = get_similar_movies(movie_id, number_of_movies, offset=0) 
+
+    for rec in similar_movies:
+        rec['rating_avg'] = safe_number(rec.get('rating_avg'))
+        rec['release_year'] = safe_number(rec.get('release_year'))
+        if rec['overview'] is None:
+            rec['overview'] = "No overview available."
+
+    return similar_movies 
+    

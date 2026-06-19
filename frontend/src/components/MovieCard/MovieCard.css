@@ -7,8 +7,36 @@
     transition: transform 0.2s;
     background-color: #fff;
     flex-shrink: 0;
-
+    height: 300px;
     position: relative;
+}
+
+.no-poster-screen {
+    width: 100% !important;
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+    padding: 1rem;
+
+    background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #334155 100%
+    );
+
+    color: white;
+    border-radius: 8px;
+}
+
+.no-poster-screen h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .bookmark-btn {
@@ -133,7 +161,9 @@
     stroke: red;
 }
 
+.no-genres-card {
 
+}
 
 /* styles for both overlaying buttons */
 .bookmark-btn,

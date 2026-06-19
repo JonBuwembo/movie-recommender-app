@@ -1,4 +1,6 @@
 from database.db_connection import get_db_connection
+from werkzeug.exceptions import HTTPException
+
 from flask import jsonify, request
 from models.movie_model import Movie, Watchlist, Rating, WatchedMovie
 from models.content_based import get_similar_movies
@@ -34,7 +36,7 @@ def get_all_movies_service():
 
         page = int(request.args.get("page", 1))
 
-        limit = int(request.args.get("limit"))
+        limit = int(request.args.get("limit", 48))
         offset = (page - 1) * limit
 
         query = """
@@ -76,12 +78,13 @@ def get_all_movies_service():
                 "poster_url" : row["poster_url"] 
             })
 
-        return jsonify(movies), 200
+        return movies
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error occurred: {e}")
-        return jsonify({"error": "Failed to fetch movies"}), 500
-
+        return {"error": "Failed to fetch movies"}
     finally:
         cursor.close()
         conn.close()
@@ -140,6 +143,8 @@ def get_movies_by_genre_service(genre):
 
         return jsonify(movies), 200
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": "Failed to fetch movies by genre"}), 500
@@ -214,6 +219,8 @@ def get_movie_details_service(movie_id):
 
         return jsonify(response)
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": "Failed to fetch recommendations"}), 500
@@ -260,6 +267,8 @@ def get_watchlist_service():
             })
 
         return jsonify(movies), 200
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": "Failed to fetch watchlist movies"}), 500
@@ -303,6 +312,8 @@ def add_to_watchlist_service(movie_id):
             "movie_id": movie_id
         }), 201
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error occurred adding to watchlist: {e}")
         return jsonify({"error": f"Failed to add movie to watchlist"})
@@ -330,6 +341,8 @@ def remove_from_watchlist_service(movie_id):
                 "movie_id": movie_id
             }
         ), 201
+    except HTTPException:
+        raise
     except Exception as e:
         db.session.rollback()
         print(f"Error occurred removing from watchlist: {e}")
@@ -368,30 +381,38 @@ def handle_rating_service():
         db.session.commit()
 
         return jsonify({"message" : "successfully rated movie for a user"})
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error: {e}")
-        return jsonify({"error" : f"Failed to add rating: {e}" })
+        return jsonify({"error" : f"Failed to add rating: {e}" }), 500
 
 
 def set_watched_service():
 
-    # get movie_id
-    frontend = request.get_json()
+    try:
+        # get movie_id
+        frontend = request.get_json()
 
-    movie_id = frontend.get("movieId")
-    # get user_id
-    user_id = get_current_user(request)
+        movie_id = frontend.get("movieId")
+        # get user_id
+        user_id = get_current_user(request)
 
-    movie_status = WatchedMovie.query.filter_by(user_id=user_id, movie_id=movie_id).first()
+        movie_status = WatchedMovie.query.filter_by(user_id=user_id, movie_id=movie_id).first()
 
-    if movie_status:
-        return jsonify({"message" : "User has already watched this movie! "}), 409
+        if movie_status:
+            return jsonify({"message" : "User has already watched this movie! "}), 409
 
-    movie_status = WatchedMovie(user_id=user_id, movie_id=movie_id)
-    db.session.add(movie_status)
-    db.session.commit()
+        movie_status = WatchedMovie(user_id=user_id, movie_id=movie_id)
+        db.session.add(movie_status)
+        db.session.commit()
 
-    return jsonify({"message" : "Success! This movie has been set to watch!"}), 201
+        return jsonify({"message" : "Success! This movie has been set to watch!"}), 201
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error {e}")
+        return jsonify({"error" : f"Failure setting watch status: {e}"})
      
 
 def get_watched_service():
@@ -434,6 +455,8 @@ def get_watched_service():
 
         return jsonify(movies), 200
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error" : f"Failed to retrieve all watched movies {e}" })
@@ -465,6 +488,8 @@ def get_rating_service(movie_id):
 
         return jsonify(rating), 201
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error {e}")
         return jsonify({"error" : f"Failed to retrieve rating for this movie {e}"})

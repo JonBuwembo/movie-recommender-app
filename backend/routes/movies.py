@@ -18,7 +18,8 @@ from services.movie_service import (
 
 from services.recommendation_service import (
     get_rating_metrics_service,
-    get_recommendations
+    get_recommendations,
+    because_you_watched_service
 )
 
 from utils.auth_utils import get_current_user
@@ -27,11 +28,13 @@ movies_bp = Blueprint('movies', __name__)
 
 @movies_bp.route('/api/movies', methods=['GET'])
 def get_all_movies():
-    return get_all_movies_service()
+    movies = get_all_movies_service()
+    return jsonify(movies), 200
 
 @movies_bp.route('/api/movies/<genre>', methods=['GET'])
 def get_movies_by_genre(genre):
     return get_movies_by_genre_service(genre)
+   
 
 @movies_bp.route('/api/details/<int:movie_id>', methods=['GET'])
 def get_movie_details(movie_id):
@@ -86,3 +89,6 @@ def get_watched():
 def get_vote_metrics(movie_id):
     return get_rating_metrics_service(movie_id)
 
+@movies_bp.route('/api/because-you-watched', methods=['GET'])
+def get_because_you_watched():
+    return because_you_watched_service()

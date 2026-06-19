@@ -1,15 +1,16 @@
 .movies-display {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, 200px) !important;
+    grid-template-columns: repeat(auto-fit, 200px) !important;
     gap: 20px !important;
     padding: 20px;
-    justify-content: start !important;
+    justify-content: center;
+    
 }
 
 /*means if max width is */
 @media (max-width: 600px) {
     .movies-display {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 150px)); /*adjust min width for smaller screens*/
+        grid-template-columns: repeat(auto-fit, minmax(150px, 150px)); /*adjust min width for smaller screens*/
     }
 
     .movie-card {

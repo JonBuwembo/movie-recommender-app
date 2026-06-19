@@ -1,6 +1,6 @@
 import {createContext, useContext} from "react";
 import React from 'react';
-import { useNavigate } from "react-router-dom";
+
 type AuthContextType = {
     authFetch: (url: string, options?: RequestInit) => Promise<Response>;
     isAuthenticated: Boolean;
@@ -42,8 +42,9 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
         
     }, [])
 
-    const authFetch = (url: string, options : RequestInit = {}) => {
-        return fetch(url, {
+    
+    const authFetch = async (url: string, options : RequestInit = {}) => {
+        const response = await fetch(url, {
             ...options, 
             headers: {
                 "Content-Type" : "application/json",
@@ -51,11 +52,21 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
                 ...options.headers
             }
         })
+
+        // prevents authorized responses from turning into runtime errors.
+        if (response.status === 401) {
+            alert("Your session has expired. Please log in again.");
+            localStorage.removeItem("token");
+            setIsAuthenticated(false);
+            throw new Error("Unauthorized");
+        }
+
+        return response
     }
 
     const login = (token: string) => {
         localStorage.setItem("token", token);
-        setIsAuthenticated(true);     
+        setIsAuthenticated(true);    
     }
 
     const logout = () => {

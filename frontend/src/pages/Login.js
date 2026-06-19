@@ -95,6 +95,15 @@ const Login = () => {
     return (
         <div> 
 
+            {/* Background */}
+            <div className="login-bg">
+                 <img src="/images/login-image.jpg" alt="background" className="bg-img" />
+            </div>
+           
+
+            {/* Overlay layer */}
+            <div className="login-overlay" />
+
             <div className="login-wrapper">
                 <form className="login-form" onSubmit={loginUser}>
                     <h2> Movie Recommender</h2>

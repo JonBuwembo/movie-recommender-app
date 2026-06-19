@@ -12,37 +12,6 @@ NN_MODEL_PATH = os.path.join(BASE_DIR, 'artifacts', 'nearest_neighbors_model.pkl
 TFIDF_PATH = os.path.join(BASE_DIR, 'artifacts', 'tfidf_matrix.pkl')
 MOVIES_DF_PATH = os.path.join(BASE_DIR, 'artifacts', 'movies_df.pkl')
 
-
-# building movie index mapping dynamizally from the database
-# connection = get_db_connection()
-# cursor = connection.cursor()
-# query = """
-# SELECT 
-#     m.movie_id, 
-#     m.title, 
-#     m.overview, 
-#     m.release_year, 
-#     m.rating_avg,
-#     m.poster_url, 
-#     STRING_AGG(g.name, ', ') AS genres
-# FROM movies m 
-# JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id 
-# JOIN genres g ON mg.genre_id = g.genre_id
-# GROUP BY m.movie_id, m.title, m.overview, m.release_year, m.rating_avg, m.poster_url;
-# """
-# cursor.execute(query)
-
-# movies_df = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
-
-
-# movie_indices = {title: idx for idx, title in enumerate(movies_df['title'])}
-# movies_df["title_clean"] = movies_df["title"].str.lower().str.strip()
-# movie_indices = pd.Series(
-#     movies_df.index,
-#     index=movies_df['title_clean'].str.lower().str.strip()
-#     ).to_dict()
-
-
 with open(TFIDF_PATH, 'rb') as f:
     tfidf_matrix = pickle.load(f)
 

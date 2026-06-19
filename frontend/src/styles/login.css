@@ -6,7 +6,10 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: #f0f0f0;
+
+
+    position: relative;
+    z-index: 2;
 }
 
 .login-wrapper h2 {
@@ -15,6 +18,31 @@
     font-weight: 800;
     color: #59738f;
     margin-bottom: 4px;
+}
+
+.login-bg {
+    position: fixed;
+    inset: 0; /* covers entire screen */
+    z-index: 0;
+}
+
+.bg-img {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+}
+
+.login-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: radial-gradient(
+        circle at center,
+        rgba(0,0,0,0.3),
+        rgba(0,0,0,0.95)
+    );
+
+    z-index: 1;
 }
 
 .login-subtitle {
@@ -31,12 +59,17 @@
     flex-direction: column;
     align-items: flex-start;
 
-    border: 1px solid rgb(129, 120, 120);
+    border: 1px solid rgb(255, 255, 255, 0.08);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    color: white;
 
     border-radius: 15px;
     padding: 35px 25px;
-    background-color:#fdfdfd;
+   
 }
 
 .login-wrapper form input {
@@ -129,7 +162,7 @@
 
 {/* Very large screens*/}
 @media (min-width: 1440px) {
-    .login-erapper form {
+    .login-wrapper form {
         max-width: 520px;
     }
 }

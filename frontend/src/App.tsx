@@ -12,7 +12,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
-import Chat from './pages/Chat';
+import ChatStartSceen from './pages/ChatStartScreen';
 
 function App() {
   return (
@@ -83,7 +83,7 @@ function App() {
 
             <Route path='/movies/ask' element = {
               <ProtectedRoute>
-                <Chat />
+                <ChatStartSceen />
               </ProtectedRoute>
             } />            
             

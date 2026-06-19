@@ -15,8 +15,8 @@
     flex-wrap: nowrap;
 
     scrollbar-width: none;
+    width: 100%;
 }
-
 
 .movie-row::-webkit-scrollbar {
     display: none;
@@ -62,8 +62,7 @@
 
 
 .nav-search input {
-    max-width: 230px;
-    width: 100%;
+    width: 230px;
     padding: 0.7rem 1rem;
 }
 
@@ -104,6 +103,10 @@
         color 0.2s ease,
         background 0.2s ease,
         opacity 0.2s ease;
+}
+
+li {
+    list-style: none;
 }
 
 .signout-btn {

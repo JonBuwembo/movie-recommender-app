@@ -8,6 +8,7 @@ import StarRating from '../components/StarRating/StarRating';
 import { Bookmark} from "lucide-react";
 import { useWatchlist } from '../useWatchlist';
 import { useAuth } from '../AuthContext';
+import { useRef } from "react";
 
 const MovieDetails = () => {
 
@@ -15,6 +16,12 @@ const MovieDetails = () => {
 
     const {authFetch} = useAuth();
     const {addToWatchlist, removeFromWatchlist, watchlist} = useWatchlist();
+
+    const containerRef = useRef(null);
+
+    // const [canScrollLeft, setCanScrollLeft] = react.useState(false);
+    // const [canScrollRight, setCanScrollRight] = react.useState(true);
+
 
     const [moviePoster, setMoviePoster] = react.useState('');
     const [movieSummary, setMovieSummary] = react.useState('');
@@ -36,9 +43,18 @@ const MovieDetails = () => {
 
     react.useEffect(() => {
         const fetchWatchStatus = async () => {
-            const response = await authFetch("http://localhost:5000/api/watched");
+            const response = await authFetch("http://localhost:5000/api/watched")
+            .catch(error => {
+                if (error.message === "Unauthorized") {
+                    return
+                }
+
+                console.log(error)
+            });
+
+            if (!response) return;
+
             const data = await response.json();
-            console.log("watched data:", data);
 
             const watchedIds = data.map(movie => movie.movie_id);
 
@@ -54,9 +70,15 @@ const MovieDetails = () => {
     react.useEffect(() => {
         const fetchVoteMetrics = async () => {
             const response = await authFetch(`http://localhost:5000/api/votes/${movieIdParam}`)
+            .catch(error => {
+                if (error.message === "Unauthorized") {
+                    return;
+                }
+            });
+
             const data = await response.json();
 
-            console.log(data)
+            if (!response) return;
 
             setNumVotes(data.vote_count.toFixed(1))
             setAvgVotes(Number(data.avg_rating).toFixed(2))
@@ -78,8 +100,20 @@ const MovieDetails = () => {
             `http://movie-recommender-backend.onrender.com`: `http://localhost:5000`;
 
         authFetch(`${BASE_URL}/api/details/${encodeURIComponent(movieId)}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json()}
+            )
             .then(data => {
+
+                if (!data?.movie) {
+                    console.error("Movie data missing:", data);
+                    setLoading(false);
+                    return;
+                }
+
                 setMoviePoster(data.movie.poster_url);
                 setMovieGenres(data.movie.genres);
                 setMovieSummary(data.movie.overview);
@@ -87,12 +121,17 @@ const MovieDetails = () => {
                 setMovieRating(data.movie.rating_avg);
                 setMovieTitle(data.movie.title);
                 setRecommendations(data.recommendations);
+
+                console.log(recommendations)
                 setLoading(false);
             })
             .catch(error => {
-                console.error('Error fetching movie details:', error);
-                setLoading(false);
-            })
+                if (error.message === "Unauthorized") {
+                    return;
+                }
+
+                console.error(error);
+            });
     }
 
     const setWatched = async (movieId) => {
@@ -106,6 +145,13 @@ const MovieDetails = () => {
             }
 
             const response = await authFetch("http://localhost:5000/api/watched", options)
+            .catch(error => {
+                if (error.message === "Unauthorized") {
+                    return;
+                }
+
+                console.error(error);
+            });
 
             if (!response.ok) {
                 console.log("unsuccessful in setting movie to complete status")
@@ -115,9 +161,31 @@ const MovieDetails = () => {
             setWatchedStatus(true);
 
         } catch (error) {
-            console.error('Error setting movie to complete:', error)
+            if (error instanceof Error && error.message === "Unauthorized") {
+                return; 
+            }
+
+            console.error(error);
         }
     }
+
+    const scroll = (direction) => {
+        const container = containerRef.current; // access DOM node
+        if (!container) return;
+        
+        const card = container.querySelector(".movie-card");
+        if (!card) return;
+
+        const style = window.getComputedStyle(container);
+        const gap = parseInt(style.gap || 0);
+        const scrollAmount = (card.offsetWidth + gap) * 3;
+
+        container.scrollBy({
+            left: direction === "left" ? -scrollAmount : scrollAmount,
+            behavior: "smooth",
+        });
+
+    };
     
 
     react.useEffect(() => {
@@ -139,7 +207,14 @@ const MovieDetails = () => {
 
                     <aside className='movie-poster'>
                         {/* Movie Poster */}
-                        <img src={moviePoster} alt="Movie Poster" />
+                        {moviePoster ? (
+                            <img src={moviePoster} alt="Movie Poster" />
+                            ) : (
+                                <div className='no-poster-screen'>
+                                    <h2>{movieTitle}</h2>
+                                </div>
+                            )}
+
                     </aside>
 
                     <section className='movie-details-info'>
@@ -190,14 +265,28 @@ const MovieDetails = () => {
 
                 <section className='recommendations'>
                     {/* Movie Recommendations */}
-                    <p> Similar Suggestions </p>
-                    
-                    <div className='movies-display'>
-                        {recommendations.map(rec => (
-                            <MovieCard key={rec.movie_id} movie={rec} />
-                        ))}
+
+                    <h3 className="similar-title"> Similar Suggestions </h3>
+
+                    <div className='similar-wrapper'>
+
+                        <button className="scroll-btn left" onClick={() => scroll("left")}>
+                            ←
+                        </button>
+
+                        <div className='similar-container' ref={containerRef}>
+                            
+                            {recommendations.map(rec => (
+
+                                <MovieCard key={rec.movie_id} movie={rec} page="recommend" />
+                            ))}
+                        </div>
+
+                        <button className="scroll-btn right" onClick={() => scroll("right")}>
+                             →
+                        </button>
+
                     </div>
-                    
                 </section>
             </main> 
             <Footer />

@@ -18,7 +18,15 @@ const StarRating = ({ movieId }) => {
         const fetchRating = async (movieId) => {
             try {
             
-                const response = await authFetch(`http://localhost:5000/api/rating/${movieId}`);
+                const response = await authFetch(`http://localhost:5000/api/rating/${movieId}`)
+                .catch(error => {
+                    if(error.message === "Unauthorized") {
+                        return;
+                    }
+
+                    console.error(error)
+                });
+
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -26,7 +34,7 @@ const StarRating = ({ movieId }) => {
                     return;
                 }
 
-                if (data.rating) setRating(data.rating);
+                if (data?.rating) setRating(data.rating);
 
             } catch (error) {
                 console.error("Error fetching rating: ", error);
@@ -60,9 +68,7 @@ const StarRating = ({ movieId }) => {
 
             if (!response.ok) {
                 console.error("failed to update/send rating")
-            } else {
-                console.log( await response.json())
-            }
+            } 
 
         } catch (error) {
             console.log("Error sending rating: ", error)
@@ -86,7 +92,7 @@ const StarRating = ({ movieId }) => {
                     onChange={(e) => setRating(e.target.value)}
                     color={(hoverValue || rating) > index ? colors.orange : colors.grey}
                     onClick={() => handleClickStar(index + 1)} 
-                    onMouseHover={() => handleMouseOverStar(index + 1)}
+                    onMouseOver={() => handleMouseOverStar(index + 1)}
                     onMouseLeave={() => handleMouseLeaveStar()}
                 />
             )
