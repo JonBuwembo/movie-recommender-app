@@ -12,22 +12,33 @@ NN_MODEL_PATH = os.path.join(BASE_DIR, 'artifacts', 'nearest_neighbors_model.pkl
 TFIDF_PATH = os.path.join(BASE_DIR, 'artifacts', 'tfidf_matrix.pkl')
 MOVIES_DF_PATH = os.path.join(BASE_DIR, 'artifacts', 'movies_df.pkl')
 
-with open(TFIDF_PATH, 'rb') as f:
-    tfidf_matrix = pickle.load(f)
+tfidf_matrix = None
+nn_model = None
+movies_df = None
+movie_id_to_index = None
 
-with open(NN_MODEL_PATH, 'rb') as f:
-    nn_model = pickle.load(f)
+def load_artifacts():
+    global tfidf_matrix, nn_model, movies_df, movie_id_to_index
+    with open(TFIDF_PATH, 'rb') as f:
+        tfidf_matrix = pickle.load(f)
 
-with open(MOVIES_DF_PATH, 'rb') as f:
-    movies_df = pickle.load(f)
+    with open(NN_MODEL_PATH, 'rb') as f:
+        nn_model = pickle.load(f)
 
-movie_id_to_index = {
-    row["movie_id"]: idx
-    for idx, row in movies_df.iterrows()
-}
+    with open(MOVIES_DF_PATH, 'rb') as f:
+        movies_df = pickle.load(f)
+
+    movie_id_to_index = {
+        row["movie_id"]: idx
+        for idx, row in movies_df.iterrows()
+    }
 
 def get_similar_movies(movie_id, top_n=10, offset=0):
+    global ifidf_matrix, nn_model, movies_df
 
+    if tfidf_matrix is None:
+        load_artifacts()
+        
     movie_index = movie_id_to_index.get(movie_id)
 
     if movie_index is None:

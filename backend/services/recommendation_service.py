@@ -27,35 +27,33 @@ user_path = (
     BASE_DIR / "models" / "rec_models" / "user_map.pkl"
 )
 
+model = None
+movie_embeddings = None
+movie_map = None
+user_map = None
+reverse_movie_map = None
 
-model_data = joblib.load(model_path)
-movie_map = joblib.load(movie_path)
-user_map = joblib.load(user_path)
+def load_svd_artifacts():
+    global model, movie_embeddings, movie_map, user_map, reverse_movie_map
 
-# from svd.pkl
-# Data in this file contains:
-# {
-#   "model" : trained_svd_model,
-#   "movie_embeddings" : movie_latent_vectors,  
-#   "user_embeddings" : user_latent_vectors
-# }
+    model_data = joblib.load(model_path)
+    movie_map = joblib.load(movie_path)
+    user_map = joblib.load(user_path)
 
-# movie embeddings -> SVD converts movies into mathematical vectors.
-# Each number in vector learns hidden features called latent factors. developers dont define these but are learned automatically by SVD
-model = model_data["model"]
-movie_embeddings = ( model_data["movie_embeddings"])
+    model = model_data["model"]
+    movie_embeddings = model_data["movie_embeddings"]
 
-reverse_movie_map = {
-    col_id : movie_id
-    for movie_id, col_id
-    in movie_map.items()
-}
-# Reverse map unpacks data such that an index for the matrix is associated with a movie.
-
-# api url: /api/recommendations?limit=30
+    reverse_movie_map = {
+        col_id : movie_id
+        for movie_id, col_id
+        in movie_map.items()
+    }
 
 def get_recommendations():
+    global movie_embeddings, movie_map, user_map
 
+    if movie_embeddings is None:
+        load_svd_artifacts()
 
     user_id = get_current_user(request)
     limit = int(request.args.get("limit", 18))
