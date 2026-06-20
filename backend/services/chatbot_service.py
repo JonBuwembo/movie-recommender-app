@@ -217,46 +217,52 @@ def ask_qwen(user_input, intent):
     print(formatted_results)
     print("")
 
+    try:
+        response = requests.post(f"{OLLAMA_URL}/api/generate",
+            json={
+                "model": "phi3:mini",
+                "prompt": f"""
+                
+                You are a movie recommendation assistant.
+                Answer the user's question using the database results below.
 
-    response = requests.post(f"{OLLAMA_URL}/api/generate",
-        json={
-            "model": "phi3:mini",
-            "prompt": f"""
-            
-            You are a movie recommendation assistant.
-            Answer the user's question using the database results below.
+                User's Question:
+                {user_input}
 
-            User's Question:
-            {user_input}
+                Database results:
+                {formatted_results}
 
-            Database results:
-            {formatted_results}
+                Rules:
+                - The database results are your single source of truth.
+                - If the database results contain relevant information, use them.
+                - Do not invent movies that are not present in the database results.
+                - Do not invent additional information.
+                - use and display movie information exactly as provided in the database results.
+                - If the database results are empty, say no matching movies were found. 
+                - DO NOT explain why the movies are selected.
+                - If there a duplicates, display that movie only once.
+                - display movie recommendations and information as bullet points.
+                - Do not explain your reasoning process.
+                - Keep your responses under 100 words.
 
-            Rules:
-             - The database results are your single source of truth.
-             - If the database results contain relevant information, use them.
-             - Do not invent movies that are not present in the database results.
-             - Do not invent additional information.
-             - use and display movie information exactly as provided in the database results.
-             - If the database results are empty, say no matching movies were found. 
-             - DO NOT explain why the movies are selected.
-             - If there a duplicates, display that movie only once.
-             - display movie recommendations and information as bullet points.
-             - Do not explain your reasoning process.
-             - Keep your responses under 100 words.
+                """,
 
-            """,
+                "stream": False
+            },
+            timeout=10
+        )
 
-            "stream": False
-        }
-    )
+        print("Qwen time:", time.time() - start)
 
-    print("Qwen time:", time.time() - start)
+        data = response.json()
 
-    data = response.json()
-
-    # Return chatbot response.
-    return data["response"]
+        # Return chatbot response.
+        return data["response"]
+    except requests.exceptions.RequestException:
+        return (
+            "The AI assistant is currently unavailable"
+            "Movie search and recommendations are still working."
+        )
 
 
 def format_similar_movies(intent, result):
