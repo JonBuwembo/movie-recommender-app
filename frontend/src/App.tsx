@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import logo from './logo.svg';
 import './styles/global.css';
 import LandingPage from './pages/LandingPage';
-import ResultsPage from './pages/ResultsPage';
 import MoviesDisplay from './pages/MoviesDisplay';
 import About from './pages/About';
 import { GenreProvider } from './GenreContext';
@@ -41,12 +40,7 @@ function App() {
               </ProtectedRoute>
             } />
 
-            <Route path="/results" element={
-              <ProtectedRoute> 
-                <ResultsPage /> 
-              </ProtectedRoute>
-            } />
-
+  
             <Route path="/movies" element={
               <ProtectedRoute> 
                 <MoviesDisplay /> 

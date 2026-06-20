@@ -2,7 +2,7 @@ import React from "react";
 import '../styles/login.css'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../AuthContext";
-
+import config from "../config";
 
 const Login = () => {
 
@@ -55,7 +55,7 @@ const Login = () => {
         const statusMsg = document.getElementById("username");
         statusMsg.innerText = "";
 
-        const fetchUrl = "http://127.0.0.1:5000/api/login";
+        const fetchUrl = `${config.API_URL}/api/login`;
 
         try {
              

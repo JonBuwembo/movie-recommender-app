@@ -4,10 +4,16 @@ import time
 import random
 from rapidfuzz import process, fuzz
 
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+
 from routes.movies import get_movies_by_genre, get_movie_details
 from services.movie_service import get_all_movies_service
 from routes.search import search_movies, get_similar_movies
 
+
+OLLAMA_URL = os.getenv("OLLAMA_URL")
 
 # What the LLM can do.
 TOOLS = [
@@ -212,7 +218,7 @@ def ask_qwen(user_input, intent):
     print("")
 
 
-    response = requests.post("http://localhost:11434/api/generate",
+    response = requests.post(f"{OLLAMA_URL}/api/generate",
         json={
             "model": "phi3:mini",
             "prompt": f"""

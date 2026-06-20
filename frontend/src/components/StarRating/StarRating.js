@@ -2,6 +2,7 @@ import { FaStar } from 'react-icons/fa'
 import { useState, useEffect } from 'react';
 import '../../styles/movieDetails.css';
 import { useAuth } from '../../AuthContext';
+import config from '../../config';
 
 const StarRating = ({ movieId }) => {
 
@@ -18,7 +19,7 @@ const StarRating = ({ movieId }) => {
         const fetchRating = async (movieId) => {
             try {
             
-                const response = await authFetch(`http://localhost:5000/api/rating/${movieId}`)
+                const response = await authFetch(`${config.API_URL}/api/rating/${movieId}`)
                 .catch(error => {
                     if(error.message === "Unauthorized") {
                         return;
@@ -58,7 +59,7 @@ const StarRating = ({ movieId }) => {
 
         try {
             // api endpoint not yet setup, but table is created
-            const response = await authFetch("http://localhost:5000/api/rating", {
+            const response = await authFetch(`${config.API_URL}:5000/api/rating`, {
                 method: "POST",
                 body: JSON.stringify({
                     movieId: movieId,

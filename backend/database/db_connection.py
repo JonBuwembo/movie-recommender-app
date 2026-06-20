@@ -6,12 +6,6 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load environment variables from .env file
-dotenv_path = Path(__file__).parent / ".env"
-load_dotenv(dotenv_path=dotenv_path)
-
-
-# Read environment variables for database connection
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -38,12 +32,12 @@ def get_db_connection():
 
 
 
-if __name__ == "__main__":
-    connection = get_db_connection()
+# if __name__ == "__main__":
+#     connection = get_db_connection()
 
-    if connection is not None:
-        print("Database connection successfully established!")
-        connection.close()
-        print("Connection closed.")
-    else:
-        print("Failed to establish database connection.")
+#     if connection is not None:
+#         print("Database connection successfully established!")
+#         connection.close()
+#         print("Connection closed.")
+#     else:
+#         print("Failed to establish database connection.")

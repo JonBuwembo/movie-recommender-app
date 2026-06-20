@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import '../styles/register.css'
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
+
 const Register = () => {
 
     const navigateTo = useNavigate();
@@ -54,7 +56,7 @@ const Register = () => {
 
         if (!isValid) return;
 
-        const fetchUrl = "http://127.0.0.1:5000/api/signup"
+        const fetchUrl = `${config.API_URL}/api/signup`
 
         fetch(fetchUrl, {
             method: "POST",

@@ -102,9 +102,7 @@ def get_movies_by_genre_service(genre):
             return jsonify({"error": "Database connection failed"}), 500
         cursor = conn.cursor()
 
-        
         page = int(request.args.get("page", 1))
-
         limit = int(request.args.get("limit"))
 
         offset = (page - 1) * limit
@@ -172,8 +170,8 @@ def get_movie_details_service(movie_id):
             m.poster_url,
             STRING_AGG(g.name, ', ') AS genres
         FROM movies m
-        JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
-        JOIN genres g ON mg.genre_id = g.genre_id
+        LEFT JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
+        LEFT JOIN genres g ON mg.genre_id = g.genre_id
         WHERE m.movie_id = %s
         GROUP BY m.movie_id, m.title, m.overview, m.release_year, m.rating_avg, m.poster_url;
         """
@@ -181,7 +179,6 @@ def get_movie_details_service(movie_id):
         cursor.execute(query, (movie_id,))
         row = cursor.fetchone()
 
-        print("Here at the beginning")
 
         if not row:
             return jsonify({
@@ -194,6 +191,8 @@ def get_movie_details_service(movie_id):
                 "recommendations": []
             })
 
+        
+
         movie = {
             "movie_id": row["movie_id"],
             "title": row["title"],
@@ -203,6 +202,8 @@ def get_movie_details_service(movie_id):
             "rating_avg" : row["rating_avg"],
             "poster_url" : row["poster_url"] 
         }
+
+        movie["genres"] = movie["genres"] or "Other"
 
         top_recommendations = get_similar_movies(movie["movie_id"], 10, offset=0)
         
@@ -350,8 +351,8 @@ def remove_from_watchlist_service(movie_id):
   
 
 def handle_rating_service():
+    
     try:
-        
         frontend = request.get_json()
 
         movie_id = frontend.get("movieId")

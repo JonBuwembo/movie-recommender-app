@@ -291,15 +291,10 @@ def because_you_watched_service():
         LIMIT 1;
         """
 
-        start = time.time()
         cursor.execute(query, (user,))
         movie = cursor.fetchone()
-        print(f"Time spend on query: ", time.time() - start)
 
-
-        start = time.time()
         top_recommendations = get_similar_movies(movie["movie_id"], 10, offset=0)
-        print(f"Time to get recommendations: ", time.time() - start)
 
         for rec in top_recommendations:
             rec['rating_avg'] = safe_number(rec.get('rating_avg'))

@@ -10,6 +10,7 @@ import { useSearch } from '../SearchContext';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useWatchlist } from '../useWatchlist';
 import { useAuth } from '../AuthContext';
+import config from '../config';
 
 
 const MoviesDisplay = () => {
@@ -48,7 +49,7 @@ const MoviesDisplay = () => {
         }
 
         setLoading(true);
-        const fetchURL = `http://localhost:5000/api/search/${encodeURIComponent(query.trim())}`;
+        const fetchURL = `${config.API_URL}/api/search/${encodeURIComponent(query.trim())}`;
 
         authFetch(fetchURL)
             .then(response => response.json())
@@ -73,8 +74,8 @@ const MoviesDisplay = () => {
         setLoading(true);
 
         const fetchURL = genre 
-        ? `http://localhost:5000/api/movies/${genre}?page=${page}&limit=48` 
-        : `http://localhost:5000/api/movies?page=${page}&limit=48`;
+        ? `${config.API_URL}/api/movies/${genre}?page=${page}&limit=48` 
+        : `${config.API_URL}/api/movies?page=${page}&limit=48`;
      
 
         authFetch(fetchURL)
@@ -108,7 +109,7 @@ const MoviesDisplay = () => {
     const fetchWatchlist = react.useCallback(() => {
         setSelectedGenre(null);
         setLoading(true);
-        const fetchURL = "http://localhost:5000/api/watchlist"
+        const fetchURL = `${config.API_URL}0/api/watchlist`
 
 
         authFetch(fetchURL)

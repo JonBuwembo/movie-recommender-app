@@ -3,6 +3,7 @@ import '../styles/chat.css'
 import { useAuth } from '../AuthContext'
 import Navbar from '../components/Navbar/Navbar';
 import '../components/Navbar/Navbar.css';
+import config from '../config';
 
 
 const ChatStartSceen = () => {
@@ -36,7 +37,7 @@ const ChatStartSceen = () => {
         // CHATBOT REPSONSE
 
         try {
-            const response = await authFetch("http://localhost:5000/api/chatbot", {
+            const response = await authFetch(`${config.API_URL}/api/chatbot`, {
                 method: "POST",
                 headers: {
                     "Content-Type" : "application/json"

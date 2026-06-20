@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../SearchContext';
 import { useAuth } from '../AuthContext';
 import MovieCard from '../components/MovieCard/MovieCard';
-
+import config from '../config';
 
 const LandingPage = () => {
 
@@ -41,7 +41,7 @@ const LandingPage = () => {
 
             try {
              
-                const response = await authFetch("http://localhost:5000/api/recommendations")
+                const response = await authFetch(`${config.API_URL}/api/recommendations`)
                 .catch(error => {
                     if (error.message === "Unauthorized") {
                         return;
@@ -70,7 +70,7 @@ const LandingPage = () => {
             // console.time("because-you-watched");
 
             try {
-                const response = await authFetch("http://localhost:5000/api/because-you-watched")
+                const response = await authFetch(`${config.API_URL}/api/because-you-watched`)
                 .catch(error => {
                     if (error.message === "Unauthorized") {
                         return;

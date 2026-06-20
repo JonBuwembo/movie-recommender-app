@@ -5,10 +5,12 @@ import MovieCard from '../components/MovieCard/MovieCard';
 import { useParams } from 'react-router-dom';
 import '../styles/movieDetails.css';
 import StarRating from '../components/StarRating/StarRating';
-import { Bookmark} from "lucide-react";
+import { Bookmark, Film} from "lucide-react";
 import { useWatchlist } from '../useWatchlist';
 import { useAuth } from '../AuthContext';
 import { useRef } from "react";
+import config from '../config';
+
 
 const MovieDetails = () => {
 
@@ -43,7 +45,7 @@ const MovieDetails = () => {
 
     react.useEffect(() => {
         const fetchWatchStatus = async () => {
-            const response = await authFetch("http://localhost:5000/api/watched")
+            const response = await authFetch(`${config.API_URL}/api/watched`)
             .catch(error => {
                 if (error.message === "Unauthorized") {
                     return
@@ -69,7 +71,7 @@ const MovieDetails = () => {
 
     react.useEffect(() => {
         const fetchVoteMetrics = async () => {
-            const response = await authFetch(`http://localhost:5000/api/votes/${movieIdParam}`)
+            const response = await authFetch(`${config.API_URL}/api/votes/${movieIdParam}`)
             .catch(error => {
                 if (error.message === "Unauthorized") {
                     return;
@@ -96,10 +98,8 @@ const MovieDetails = () => {
         // Fetch movie details using the movieId from the URL
         // fetch(`http://localhost:5000/api/movies/${movieId}`)
         // Then set the movie details in state to display on the page
-        const BASE_URL = process.env.NODE_ENV === 'production'? 
-            `http://movie-recommender-backend.onrender.com`: `http://localhost:5000`;
 
-        authFetch(`${BASE_URL}/api/details/${encodeURIComponent(movieId)}`)
+        authFetch(`${config.API_URL}/api/details/${encodeURIComponent(movieId)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
@@ -144,7 +144,7 @@ const MovieDetails = () => {
                 })
             }
 
-            const response = await authFetch("http://localhost:5000/api/watched", options)
+            const response = await authFetch(`${config.API_URL}:5000/api/watched`, options)
             .catch(error => {
                 if (error.message === "Unauthorized") {
                     return;
@@ -210,7 +210,8 @@ const MovieDetails = () => {
                         {moviePoster ? (
                             <img src={moviePoster} alt="Movie Poster" />
                             ) : (
-                                <div className='no-poster-screen'>
+                                <div className='no-poster-screen-details'>
+                                    <Film size={75} />
                                     <h2>{movieTitle}</h2>
                                 </div>
                             )}
@@ -231,7 +232,7 @@ const MovieDetails = () => {
 
                         {/* Movie Genres */}
                         <label> Genres </label>
-                        <p>{movieGenres}</p>
+                        <p>{movieGenres === "Other" ? "No genres available" : movieGenres}</p>
 
                         {/* Movie Rating */}
                         {/* <label className="rating-label"> Average Rating </label>

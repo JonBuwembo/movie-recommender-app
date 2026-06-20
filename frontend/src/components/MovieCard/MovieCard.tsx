@@ -19,16 +19,6 @@ const MovieCard = ({ movie, mode = "normal", page = ""}: { movie: any; mode?: st
 
     const saved = watchlist.some(item => item.movie_id === movie.movie_id);
 
-
-    // useEffect(() => {
-    //     fetch(`http://localhost:5000/api/watchlist/${userId}`, { method: "GET"})
-    //         .then(res => res.json())
-    //         .then(data => setWatchlist(data))
-    //         .catch(err => console.error(err));
-    // }, []);
-
-    
-
     const showDetails = (movie: any) => {
         navigateTo(`/movies/details/${movie.movie_id}`);
     }
