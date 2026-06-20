@@ -1,21 +1,15 @@
 import React from 'react';
-import { useEffect } from 'react';
 import './MovieCard.css';
 import { useNavigate } from 'react-router-dom';
-import  MovieDetails from '../../pages/MovieDetails';
 import { Trash2, Bookmark } from "lucide-react";
 import { useWatchlist } from '../../useWatchlist';
 
-type watchListMovie = {
-    movie_id: number;
-};
+
 
 const MovieCard = ({ movie, mode = "normal", page = ""}: { movie: any; mode?: string; page?: string} ) => {
-    const navigateTo = useNavigate();
-    const userId = JSON.parse(localStorage.getItem('user') || "null");
-    // const [watchlist, setWatchlist] = react.useState<watchListMovie[]>([]);
 
-    const { addToWatchlist, removeFromWatchlist, watchlist, setWatchlist } = useWatchlist();
+    const navigateTo = useNavigate();
+    const { addToWatchlist, removeFromWatchlist, watchlist } = useWatchlist();
 
     const saved = watchlist.some(item => item.movie_id === movie.movie_id);
 

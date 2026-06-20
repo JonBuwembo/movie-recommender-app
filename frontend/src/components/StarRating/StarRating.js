@@ -11,8 +11,6 @@ const StarRating = ({ movieId }) => {
 
     const {authFetch} = useAuth();
 
-    const userId = JSON.parse(localStorage.getItem('user') || "null");
-
     useEffect(() => {
         
         // fetch rating for this current movie
@@ -44,7 +42,7 @@ const StarRating = ({ movieId }) => {
 
         fetchRating(movieId)
 
-    }, [movieId])
+    }, [movieId, authFetch])
 
     const handleMouseOverStar = (value) => {
         setHoverValue(value)

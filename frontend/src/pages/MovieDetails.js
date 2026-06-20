@@ -17,7 +17,7 @@ const MovieDetails = () => {
     const {movieIdParam} = useParams();
 
     const {authFetch} = useAuth();
-    const {addToWatchlist, removeFromWatchlist, watchlist} = useWatchlist();
+    const {addToWatchlist, watchlist} = useWatchlist();
 
     const containerRef = useRef(null);
 
@@ -29,7 +29,7 @@ const MovieDetails = () => {
     const [movieSummary, setMovieSummary] = react.useState('');
     const [movieGenres, setMovieGenres] = react.useState([]);
     const [movieReleaseYear, setMovieReleaseYear] = react.useState('');
-    const [movieRating, setMovieRating] = react.useState('');
+    // const [movieRating, setMovieRating] = react.useState('');
     const [movieTitle, setMovieTitle] = react.useState('');
 
 
@@ -60,7 +60,7 @@ const MovieDetails = () => {
 
             const watchedIds = data.map(movie => movie.movie_id);
 
-            const isWatched = watchedIds.some(id => Number(id) == Number(movieIdParam));
+            const isWatched = watchedIds.some(id => Number(id) === Number(movieIdParam));
             setWatchedStatus(isWatched);
         }
         
@@ -118,7 +118,7 @@ const MovieDetails = () => {
                 setMovieGenres(data.movie.genres);
                 setMovieSummary(data.movie.overview);
                 setMovieReleaseYear(data.movie.release_year);
-                setMovieRating(data.movie.rating_avg);
+                // setMovieRating(data.movie.rating_avg);
                 setMovieTitle(data.movie.title);
                 setRecommendations(data.recommendations);
 

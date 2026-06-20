@@ -36,6 +36,12 @@ reverse_movie_map = None
 def load_svd_artifacts():
     global model, movie_embeddings, movie_map, user_map, reverse_movie_map
 
+    print("Current working directory:", os.getcwd())
+    print("BASE_DIR:", BASE_DIR)
+    print("Model exists:", model_path.exists(), model_path)
+    print("Movie map exists:", movie_path.exists(), movie_path)
+    print("User map exists:", user_path.exists(), user_path)
+    
     model_data = joblib.load(model_path)
     movie_map = joblib.load(movie_path)
     user_map = joblib.load(user_path)

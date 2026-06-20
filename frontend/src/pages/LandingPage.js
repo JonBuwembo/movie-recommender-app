@@ -13,7 +13,6 @@ import config from '../config';
 const LandingPage = () => {
 
     // PRIMARILY A SEARCH BAR PAGE WITH NAVIGATION TO GENRES
-    const {selectedGenre } = useGenre();
     let {searchQuery, setSearchQuery} = useSearch();
     const navigateTo = useNavigate();
 
@@ -99,7 +98,7 @@ const LandingPage = () => {
         getRecommendations();
         getBecauseUWatchedRecommendations();
         
-    },[navigateTo])
+    },[navigateTo, authFetch])
 
     return (
         <div className='layout'>

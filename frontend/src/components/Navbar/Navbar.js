@@ -10,7 +10,6 @@ import { Link } from 'react-router-dom';
 
 const Navbar = () => {
 
-    const {queryParam }= useParams();
     const {searchQuery, setSearchQuery} = useSearch();
     
     const {setSelectedGenre} = useGenre();
@@ -21,7 +20,6 @@ const Navbar = () => {
     const [open, setOpen] = react.useState(false);
     const dropdownRef = react.useRef(null);
 
-    const userId = JSON.parse(localStorage.getItem('user') || "null");
 
     // Close dropdown when user clicks outside 
     react.useEffect(() => {
@@ -89,7 +87,7 @@ const Navbar = () => {
 
             <div className="nav-left">
                 
-                <a className='logo' href="#">
+                <a className='logo' href="/home">
                     🎬 MidnightScoop
                 </a>
 

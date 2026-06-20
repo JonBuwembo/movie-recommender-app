@@ -34,7 +34,7 @@ export const WatchlistProvider = ({children}: { children: React.ReactNode}) => {
             .then(response => response.json())
             .then(data => setWatchlist(data.map((movie : WatchlistMovie) => ({ movie_id: movie.movie_id }))))
             .catch(err => console.error(err));
-    }, [userId]);
+    }, [userId, authFetch]);
 
     return (
         <WatchlistContext.Provider

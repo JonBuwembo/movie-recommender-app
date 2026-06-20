@@ -40,7 +40,7 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
         }
         
         
-    }, [])
+    }, [token])
 
     
     const authFetch = async (url: string, options : RequestInit = {}) => {
