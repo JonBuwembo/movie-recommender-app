@@ -1,6 +1,7 @@
 from database.db_connection import get_db_connection
 from models.content_based import get_similar_movies
 from werkzeug.exceptions import HTTPException
+from huggingface_hub import hf_hub_download
 from flask import jsonify, request
 import app
 from app import db
@@ -17,16 +18,6 @@ from utils.auth_utils import ( get_current_user )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-model_path = (
-    BASE_DIR / "models" / "rec_models" / "svd.pkl"
-)
-movie_path = (
-    BASE_DIR / "models" / "rec_models" / "movie_map.pkl"
-)
-user_path = (
-    BASE_DIR / "models" / "rec_models" / "user_map.pkl"
-)
-
 model = None
 movie_embeddings = None
 movie_map = None
@@ -36,12 +27,23 @@ reverse_movie_map = None
 def load_svd_artifacts():
     global model, movie_embeddings, movie_map, user_map, reverse_movie_map
 
-    print("Current working directory:", os.getcwd())
-    print("BASE_DIR:", BASE_DIR)
-    print("Model exists:", model_path.exists(), model_path)
-    print("Movie map exists:", movie_path.exists(), movie_path)
-    print("User map exists:", user_path.exists(), user_path)
-    
+    if model is not None:
+        return
+
+    model_path = hf_hub_download(
+        repo_id="JonBuwembo/movie-recommender-models",
+        filename="svd.pkl"
+    )
+
+    movie_path = hf_hub_download(
+        repo_id="JonBuwembo/movie-recommender-models",
+        filename="movie_map.pkl"
+    )
+    user_path = hf_hub_download(
+        repo_id="JonBuwembo/movie-recommender-models",
+        filename="user_map.pkl"
+    )
+
     model_data = joblib.load(model_path)
     movie_map = joblib.load(movie_path)
     user_map = joblib.load(user_path)

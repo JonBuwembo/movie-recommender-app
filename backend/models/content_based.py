@@ -5,12 +5,10 @@ import pandas as pd
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from huggingface_hub import hf_hub_download
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-NN_MODEL_PATH = os.path.join(BASE_DIR, 'artifacts', 'nearest_neighbors_model.pkl')
-TFIDF_PATH = os.path.join(BASE_DIR, 'artifacts', 'tfidf_matrix.pkl')
-MOVIES_DF_PATH = os.path.join(BASE_DIR, 'artifacts', 'movies_df.pkl')
 
 tfidf_matrix = None
 nn_model = None
@@ -19,6 +17,30 @@ movie_id_to_index = None
 
 def load_artifacts():
     global tfidf_matrix, nn_model, movies_df, movie_id_to_index
+
+    # prevents files from being downloaded again.
+    if (
+        nn_model is not None
+        and tfidf_matrix is not None
+        and movies_df is not None
+        and movie_id_to_index is not None
+    ):
+        return
+    
+    NN_MODEL_PATH = hf_hub_download(
+        repo_id="JonBuwembo/movie-recommender-models",
+        filename="nearest_neighborhood_model.pkl"
+    )
+
+    TFIDF_PATH = hf_hub_download(    
+        repo_id="JonBuwembo/movie-recommender-models", filename='tfidf_matrix.pkl'
+    )
+
+    MOVIES_DF_PATH = hf_hub_download(
+        repo_id="JonBuwembo/movie-recommender-models",
+        filename='movie_df.pkl'
+    )
+
     with open(TFIDF_PATH, 'rb') as f:
         tfidf_matrix = pickle.load(f)
 
