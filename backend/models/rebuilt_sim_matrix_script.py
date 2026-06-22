@@ -1,22 +1,73 @@
-# To Run file, run:  python -m models.rebuilt_sim_matrix_script
+# To Run file, run:  python -m models.rebuilt_sim_matrix_script from backend/ folder
 
 import os
 import pickle
 import pandas as pd
 from database.db_connection import get_db_connection
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
+from huggingface_hub import upload_file, login
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 ARTIFACTS_DIR = os.path.join(BASE_DIR, "artifacts")
 os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+load_dotenv()
 
-NM_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "nearest_neighbors_model.pkl")
+hugging_face_key = os.getenv("HUGGINGFACE_API_KEY")
+
+if hugging_face_key is None:
+    raise ValueError("Hugging Face Key in .env cannot be read or is not found!")
+
+hugging_repo = "JonBuwembo/movie-recommender-models"
+login(hugging_face_key)
+
+NN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "nearest_neighbors_model.pkl")
 TFIDF_PATH = os.path.join(ARTIFACTS_DIR, "tfidf_matrix.pkl")
 VECTORIZER_PATH = os.path.join(ARTIFACTS_DIR, "tfidf_vectorizer.pkl")
-MOVIES_DF_PATH = os.path.join(ARTIFACTS_DIR, "movies_df.pkl")
+MOVIE_ID_TO_INDEX_PATH = os.path.join(ARTIFACTS_DIR, "movie_id_to_index.pkl")
+INDEX_TO_MOVIE_ID_PATH = os.path.join(ARTIFACTS_DIR, "index_to_movie_id.pkl")
+
+def upload_artifacts():
+    """
+    Pushing updated model files to Hugging Face
+    """
+
+    upload_file(
+        path_or_fileobj=NN_MODEL_PATH,
+        path_in_repo="nearest_neighbors_model.pkl",
+        repo_id=hugging_repo,
+        repo_type="model"
+    )
+
+    upload_file(
+        path_or_fileobj=TFIDF_PATH,
+        path_in_repo="tfidf_matrix.pkl",
+        repo_id=hugging_repo,
+        repo_type="model"
+    )
+
+    upload_file(
+        path_or_fileobj=MOVIE_ID_TO_INDEX_PATH,
+        path_in_repo="movie_id_to_index.pkl",
+        repo_id=hugging_repo,
+        repo_type="model"
+    )
+
+    upload_file(
+        path_or_fileobj=INDEX_TO_MOVIE_ID_PATH,
+        path_in_repo="index_to_movie_id.pkl",
+        repo_id=hugging_repo,
+        repo_type="model"
+    )
+
+    upload_file(
+        path_or_fileobj=VECTORIZER_PATH,
+        path_in_repo="tfidf_vectorizer.pkl",
+        repo_id=hugging_repo,
+        repo_type="model"
+    )
 
 
 def build_movie_metadata_model():
@@ -45,18 +96,13 @@ def build_movie_metadata_model():
     rows = cursor.fetchall()
     columns = [desc[0] for desc in cursor.description]
     movies_df = pd.DataFrame(rows, columns=columns)
-    # print(movies_df.head())
-
+ 
     movies_df["text"] = (
         movies_df["title"].fillna("") + " " +
         movies_df["overview"].fillna("") + " " +
         movies_df["genres"].fillna("") + " " +
         movies_df["release_year"].fillna("")
     )
-
-    # print(movies_df["text"].head())
-    # print(movies_df["text"].isna().sum())
-    # print(movies_df["text"].str.len().describe())
 
     vectorizer = TfidfVectorizer(
         stop_words="english", 
@@ -67,21 +113,26 @@ def build_movie_metadata_model():
 
     tfidf_matrix = vectorizer.fit_transform(movies_df["text"])
 
-    nm_model = NearestNeighbors(
+    nn_model = NearestNeighbors(
         metric="cosine",
         algorithm="brute",
         n_neighbors=50
     )
 
-    nm_model.fit(tfidf_matrix)
+    nn_model.fit(tfidf_matrix)
 
-    # movie_indices = {
-    #     row["movie_id"]: index
-    #     for index, row in movies_df.iterrows()
-    # }
+    movie_id_to_index = {}
+    index_to_movie_id = {}
 
-    with open(NM_MODEL_PATH, "wb") as f:
-        pickle.dump(nm_model, f)
+    for idx, row in movies_df.iterrows():
+        movie_id = int(row["movie_id"])
+
+        movie_id_to_index[movie_id] = idx
+        index_to_movie_id[idx] = movie_id
+
+
+    with open(NN_MODEL_PATH, "wb") as f:
+        pickle.dump(nn_model, f)
 
     with open(TFIDF_PATH, "wb") as f:
         pickle.dump(tfidf_matrix, f)
@@ -89,11 +140,16 @@ def build_movie_metadata_model():
     with open(VECTORIZER_PATH, "wb") as f:
         pickle.dump(vectorizer, f)
 
-    with open(MOVIES_DF_PATH, "wb") as f:
-        pickle.dump(movies_df, f)
+    with open(MOVIE_ID_TO_INDEX_PATH, "wb") as f:
+        pickle.dump(movie_id_to_index, f)
+
+    with open(INDEX_TO_MOVIE_ID_PATH, "wb") as f:
+        pickle.dump(index_to_movie_id, f)
+    
 
     print(f"Built TF-IDF + nearest neighbor model for {len(movies_df)} movies.")
 
 
 if __name__ == "__main__":
-    build_movie_metadata_model()
+    build_movie_metadata_model() # Load into artifacts folder
+    upload_artifacts() # read from artifacts folder -> upload to hugging face

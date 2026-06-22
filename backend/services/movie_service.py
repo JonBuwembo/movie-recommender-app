@@ -191,9 +191,7 @@ def get_movie_details_service(movie_id):
                 "recommendations": []
             })
 
-        
-
-        movie = {
+        selected_movie = {
             "movie_id": row["movie_id"],
             "title": row["title"],
             "genres": row["genres"],
@@ -203,18 +201,54 @@ def get_movie_details_service(movie_id):
             "poster_url" : row["poster_url"] 
         }
 
-        movie["genres"] = movie["genres"] or "Other"
+        selected_movie["genres"] = selected_movie["genres"] or "Other"
 
-        top_recommendations = get_similar_movies(movie["movie_id"], 10, offset=0)
+        top_recommendation_ids = get_similar_movies(selected_movie["movie_id"], 10, offset=0)
+        top_recommendation_ids = [rec["movie_id"] for rec in top_recommendation_ids]
+
+        query_recs = """
+                 SELECT 
+                    m.movie_id,
+                    m.title,
+                    m.overview,
+                    m.release_year,
+                    m.rating_avg,
+                    m.poster_url,
+                    STRING_AGG(g.name, ', ') AS genres
+                FROM movies m
+                LEFT JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
+                LEFT JOIN genres g ON mg.genre_id = g.genre_id
+                WHERE m.movie_id = ANY(%s)
+                GROUP BY m.movie_id, m.title, m.overview, m.release_year, m.rating_avg, m.poster_url;
+        """
+
+        cursor.execute(query_recs, (top_recommendation_ids,))
+        movies = cursor.fetchall()
+        
+        top_recommendations = []
+
+        for rec in movies:
+            a_movie = {
+                "movie_id": rec["movie_id"],
+                "title": rec["title"],
+                "genres": rec["genres"],
+                "overview": rec["overview"],
+                "release_year": rec["release_year"],
+                "poster_url" : rec["poster_url"] 
+            }
+
+            top_recommendations.append(a_movie)
+
         
         for rec in top_recommendations:
-            rec['rating_avg'] = safe_number(rec.get('rating_avg'))
+            # rec['rating_avg'] = safe_number(rec.get('rating_avg'))
             rec['release_year'] = safe_number(rec.get('release_year'))
+            rec["genres"] = rec["genres"] or "Other"
             if rec['overview'] is None:
                 rec['overview'] = "No overview available."
 
         response = {
-            "movie": movie, 
+            "movie": selected_movie, 
             "recommendations": top_recommendations
         }
 

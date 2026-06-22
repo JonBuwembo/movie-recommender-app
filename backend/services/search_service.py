@@ -1,5 +1,6 @@
 from database.db_connection import get_db_connection
-from models.content_based import movies_df, get_similar_movies
+from models.content_based import get_similar_movies
+from services.recommendation_service import get_movie_lookup
 import math
 
 from flask import jsonify
@@ -48,57 +49,65 @@ def search_movies_services(movie):
         cursor.execute(query, (search_pattern,))
         rows = cursor.fetchall()
 
-        # if not rows:
-        #     return jsonify({"top_results": [], "similar_movies": []}), 200
-        
-        # convert database rows into pandas dataframe for easier manipulation
-        # each column is a field name and each row is a movie.
-        movies_df = pd.DataFrame(rows, columns=[desc[0] for desc in cursor.description])
+        titles = [(row["title"].strip().lower(), row["movie_id"]) for row in rows]
+        title_list = [t[0] for t in titles]
 
-        titles_series = movies_df['title'].str.strip()
-        titles = titles_series.str.lower().tolist() # list of all movie titles in the database, preprocessed to be lowercase and stripped of whitespace for better fuzzy matching.
-        search_query = movie.strip().lower() # remove spaces from user input.
+        search_query = movie.strip().lower() 
 
-        final_query = process.extractOne(search_query, titles, scorer=fuzz.ratio, score_cutoff=60) # returns a tuple of (best matching title, score, index in movies_df)
+        match = process.extractOne(
+            search_query, 
+            title_list, 
+            scorer=fuzz.ratio, 
+            score_cutoff=60
+        )
 
-
-        if not final_query:
-            print(final_query)
+        if not match:
             return jsonify({"top_results": [], "similar_movies": []}), 200 # if no good match, return no results and we can handle that downstream.
         
-        q_title, q_score, q_index = final_query
-        print(f"Best match movies for query is: {q_title} with score of {q_score}") # print for debugging.
+        matched_title = match[0]
+        movie_id = next(m_id for title, m_id in titles if title == matched_title)
 
-        first_movie = movies_df.iloc[q_index].to_dict()
-        movie_id = first_movie["movie_id"]
+        cursor.execute("""
+            SELECT 
+                m.movie_id,
+                m.title,
+                m.overview,
+                m.release_year,
+                m.poster_url,
+                STRING_AGG(g.name, ', ') AS genres
+            FROM movies m
+            LEFT JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
+            LEFT JOIN genres g ON mg.genre_id = g.genre_id
+            WHERE m.movie_id = %s
+            GROUP BY m.movie_id, m.title, m.overview, m.release_year, m.rating_avg, m.poster_url
+        """, (movie_id,))
+
+        first_movie = cursor.fetchone()
     
         top_results = get_similar_movies(movie_id, 10, offset=0)
         top_results.insert(0, first_movie) # add the query itself at top of list.
 
+        movie_lookup = get_movie_lookup()
+        top_results_list = []
 
         for movie in top_results:
-            movie['rating_avg'] = safe_number(movie.get('rating_avg'))
-            movie['release_year'] = safe_number(movie.get('release_year'))
-            if movie['overview'] is None:
-                movie['overview'] = "No overview available."
+            movie_info = movie_lookup.get(movie["movie_id"], {})
+            top_results_list.append(movie_info)
 
         similar_movies = get_similar_movies(movie_id, 30, offset=10)
+        similar_movies_list = []
 
         for movie in similar_movies:
-            movie['rating_avg'] = safe_number(movie.get('rating_avg'))
-            movie['release_year'] = safe_number(movie.get('release_year'))
-            if movie['overview'] is None:
-                movie['overview'] = "No overview available."
+            movie_info = movie_lookup.get(movie["movie_id"], {})
+            similar_movies_list.append(movie_info)
 
-        # print(f"Top results for search query '{movie}': {[m['title'] for m in top_results]}")
-        # print(f"Similar movies for search query '{movie}': {[m['title'] for m in similar_movies]}")
-
+        print(top_results_list[0])
+        
         response = {
-            "top_results": top_results,
-            "similar_movies": similar_movies
+            "top_results": top_results_list,
+            "similar_movies": similar_movies_list
         }
 
-        # print("FINAL RESPONSE:", response)
         return jsonify(response), 200
     except Exception as e:
         print(f"Error occurred: {e}")

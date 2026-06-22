@@ -16,13 +16,15 @@ from models.movie_model import (WatchedMovie, Rating)
 from services.movie_service import safe_number
 from utils.auth_utils import ( get_current_user )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
 
 model = None
 movie_embeddings = None
 movie_map = None
 user_map = None
 reverse_movie_map = None
+
+hugging_repo="JonBuwembo/movie-recommender-models"
 
 def load_svd_artifacts():
     global model, movie_embeddings, movie_map, user_map, reverse_movie_map
@@ -31,16 +33,16 @@ def load_svd_artifacts():
         return
 
     model_path = hf_hub_download(
-        repo_id="JonBuwembo/movie-recommender-models",
+        repo_id=hugging_repo,
         filename="svd.pkl"
     )
 
     movie_path = hf_hub_download(
-        repo_id="JonBuwembo/movie-recommender-models",
+        repo_id=hugging_repo,
         filename="movie_map.pkl"
     )
     user_path = hf_hub_download(
-        repo_id="JonBuwembo/movie-recommender-models",
+        repo_id=hugging_repo,
         filename="user_map.pkl"
     )
 
@@ -84,7 +86,6 @@ def get_recommendations():
     watched = WatchedMovie.query.filter_by(user_id=user_id).all()
     rated = Rating.query.filter_by(user_id=user_id).all()
 
-    # creates sets, fast lookup: {550, 991, 122, ...}
     watched_movie_ids = {
         movie.movie_id
         for movie in watched
@@ -97,8 +98,6 @@ def get_recommendations():
 
     excluded_movies =  watched_movie_ids | rated_movie_ids
 
-    # embeddings are: 300k movies * certain number of latent factors per movie
-    # extract those latent factors for each movie (user's tastes)
     user_vector = np.zeros(movie_embeddings.shape[1])
     user_ratings = Rating.query.filter_by(
         user_id=user_id
@@ -111,11 +110,6 @@ def get_recommendations():
             continue
 
         movie_idx = movie_map[rating.movie_id]
-
-        # print(model_data["movie_embeddings"].shape)
-        # print(len(movie_map))
-        # print(movie_map)
-
 
         movie_vector = (
             movie_embeddings[movie_idx]
@@ -131,11 +125,6 @@ def get_recommendations():
         if movie_id in excluded_movies:
             continue
 
-        # heart of recommendation math
-        # dot product measures how similar a movie is to user taste.
-        # vectors point same direction -> high score
-        # vectors point diff direction -> low score
-        # returns the highest score.
         score = np.dot(user_vector, movie_vector)
 
         scores.append({
@@ -242,7 +231,7 @@ def get_movie_lookup():
         movie_lookup = {
             int(row["movie_id"]): 
             {
-                # "movie_id": int(row["movie_id"]),
+                "movie_id": row["movie_id"],
                 "title": str(row["title"]),
                 "overview": str(row["overview"]),
                 "release_year": str(row["release_year"]),
@@ -263,9 +252,9 @@ def because_you_watched_service():
     cursor = connection.cursor()
 
     try:
-        user = get_current_user(request=request)
+        user_id = get_current_user(request=request)
 
-        if not user:
+        if not user_id:
             return jsonify({"Error" : "Cannot identify current user"})
 
         query = """
@@ -284,39 +273,41 @@ def because_you_watched_service():
             ON m.movie_id = mg.movie_id
         JOIN genres g
             ON mg.genre_id = g.genre_id
-        WHERE wm.user_id = %s
-        GROUP BY
-            m.movie_id,
-            m.title,
-            m.overview,
-            m.release_year,
-            m.poster_url,
+        WHERE 
+            wm.user_id = %s
+        GROUP BY 
+            m.movie_id, 
+            m.title, 
+            m.overview, 
+            m.release_year, 
+            m.poster_url, 
             wm.watched_at
         ORDER BY
             wm.watched_at DESC
         LIMIT 1;
         """
 
-        cursor.execute(query, (user,))
+        cursor.execute(query, (user_id,))
         movie = cursor.fetchone()
 
-        top_recommendations = get_similar_movies(movie["movie_id"], 10, offset=0)
+        rec_movie_ids = get_similar_movies(movie["movie_id"], 10, offset=0)
+        
+        movie_lookup = get_movie_lookup()
+        movies = []
 
-        for rec in top_recommendations:
-            rec['rating_avg'] = safe_number(rec.get('rating_avg'))
-            rec['release_year'] = safe_number(rec.get('release_year'))
-            if rec['overview'] is None:
-                rec['overview'] = "No overview available."
+        for movie_id in rec_movie_ids:
+            movie_info = movie_lookup.get(movie_id["movie_id"], {})
+            movies.append(movie_info)
 
         return jsonify({
             "movie_title": movie["title"],
-            "recs" : top_recommendations
+            "recs" : movies
         })
 
     except HTTPException:
         raise
     except Exception as e:
-        # print(f"Error: {e}")
+        print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         connection.close()

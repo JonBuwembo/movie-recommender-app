@@ -1,4 +1,4 @@
-import {createContext, useContext} from "react";
+import {createContext, useContext, useRef} from "react";
 import React from 'react';
 
 type AuthContextType = {
@@ -17,6 +17,8 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
     const [authLoading, setAuthLoading] = React.useState(true);
 
     const token = localStorage.getItem('token');
+    let isLoggingOut = useRef(false);
+    let sessionExpired = useRef(false);
 
     React.useEffect(() => {
 
@@ -54,8 +56,13 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
         })
 
         // prevents authorized responses from turning into runtime errors.
+        // properly alert user only when there jwt token has expired. (not when user logs out)
         if (response.status === 401) {
-            alert("Your session has expired. Please log in again.");
+            if (!isLoggingOut.current && !sessionExpired.current) {
+                sessionExpired.current = true;
+                alert("Your session has expired. Please log in again.");
+            }
+
             localStorage.removeItem("token");
             setIsAuthenticated(false);
             throw new Error("Unauthorized");
@@ -66,11 +73,13 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
 
     const login = (token: string) => {
         localStorage.setItem("token", token);
-        setIsAuthenticated(true);    
+        setIsAuthenticated(true);
+        sessionExpired.current = false;    
     }
 
     const logout = () => {
-        localStorage.removeItem("token")
+        isLoggingOut.current = true;
+        localStorage.removeItem("token");
         setIsAuthenticated(false);
     }
 
