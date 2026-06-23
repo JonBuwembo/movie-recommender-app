@@ -3,6 +3,8 @@
 import os
 import pickle
 import pandas as pd
+import numpy as np
+
 from database.db_connection import get_db_connection
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
@@ -23,11 +25,8 @@ if hugging_face_key is None:
 hugging_repo = "JonBuwembo/movie-recommender-models"
 login(hugging_face_key)
 
-NN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "nearest_neighbors_model.pkl")
-TFIDF_PATH = os.path.join(ARTIFACTS_DIR, "tfidf_matrix.pkl")
-VECTORIZER_PATH = os.path.join(ARTIFACTS_DIR, "tfidf_vectorizer.pkl")
 MOVIE_ID_TO_INDEX_PATH = os.path.join(ARTIFACTS_DIR, "movie_id_to_index.pkl")
-INDEX_TO_MOVIE_ID_PATH = os.path.join(ARTIFACTS_DIR, "index_to_movie_id.pkl")
+NEIGHBOR_MATRIX_PATH = os.path.join(ARTIFACTS_DIR, "neighbor_matrix.pkl")
 
 def upload_artifacts():
     """
@@ -35,15 +34,8 @@ def upload_artifacts():
     """
 
     upload_file(
-        path_or_fileobj=NN_MODEL_PATH,
-        path_in_repo="nearest_neighbors_model.pkl",
-        repo_id=hugging_repo,
-        repo_type="model"
-    )
-
-    upload_file(
-        path_or_fileobj=TFIDF_PATH,
-        path_in_repo="tfidf_matrix.pkl",
+        path_or_fileobj=NEIGHBOR_MATRIX_PATH,
+        path_in_repo="neighbor_matrix.pkl",
         repo_id=hugging_repo,
         repo_type="model"
     )
@@ -54,21 +46,6 @@ def upload_artifacts():
         repo_id=hugging_repo,
         repo_type="model"
     )
-
-    upload_file(
-        path_or_fileobj=INDEX_TO_MOVIE_ID_PATH,
-        path_in_repo="index_to_movie_id.pkl",
-        repo_id=hugging_repo,
-        repo_type="model"
-    )
-
-    upload_file(
-        path_or_fileobj=VECTORIZER_PATH,
-        path_in_repo="tfidf_vectorizer.pkl",
-        repo_id=hugging_repo,
-        repo_type="model"
-    )
-
 
 def build_movie_metadata_model():
     connection = get_db_connection()
@@ -90,8 +67,6 @@ def build_movie_metadata_model():
     ORDER BY m.movie_id;
     """
 
-    # movies_df = pd.read_sql(query, connection)
-
     cursor.execute(query)
     rows = cursor.fetchall()
     columns = [desc[0] for desc in cursor.description]
@@ -106,7 +81,7 @@ def build_movie_metadata_model():
 
     vectorizer = TfidfVectorizer(
         stop_words="english", 
-        max_features=50000,
+        max_features=20000,
         min_df=2, # ignore words that appear in fewer than 2 movies
         max_df=0.85 # 
     )
@@ -130,22 +105,27 @@ def build_movie_metadata_model():
         movie_id_to_index[movie_id] = idx
         index_to_movie_id[idx] = movie_id
 
+    neighbor_matrix = np.empty(
+        (len(movies_df), 50),
+        dtype=np.int32
+    )
 
-    with open(NN_MODEL_PATH, "wb") as f:
-        pickle.dump(nn_model, f)
+    distances, indices = nn_model.kneighbors(
+        tfidf_matrix,
+        n_neighbors=51
+    )
 
-    with open(TFIDF_PATH, "wb") as f:
-        pickle.dump(tfidf_matrix, f)
+    for idx in range(len(movies_df)):
+        neighbor_matrix[idx] = [
+            index_to_movie_id[i]
+            for i in indices[idx][1:]  # skip the first movie (just get its recs)
+        ]
 
-    with open(VECTORIZER_PATH, "wb") as f:
-        pickle.dump(vectorizer, f)
+    with open(NEIGHBOR_MATRIX_PATH, "wb") as f:
+        pickle.dump(neighbor_matrix, f)
 
     with open(MOVIE_ID_TO_INDEX_PATH, "wb") as f:
         pickle.dump(movie_id_to_index, f)
-
-    with open(INDEX_TO_MOVIE_ID_PATH, "wb") as f:
-        pickle.dump(index_to_movie_id, f)
-    
 
     print(f"Built TF-IDF + nearest neighbor model for {len(movies_df)} movies.")
 

@@ -57,6 +57,7 @@ export const AuthProvider = ({ children } : {children: React.ReactNode}) => {
 
         // prevents authorized responses from turning into runtime errors.
         // properly alert user only when there jwt token has expired. (not when user logs out)
+        // Ensure only one alert message appears, not one for each route that tries to authenticate
         if (response.status === 401) {
             if (!isLoggingOut.current && !sessionExpired.current) {
                 sessionExpired.current = true;
