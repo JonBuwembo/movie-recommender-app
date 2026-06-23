@@ -9,7 +9,6 @@ from huggingface_hub import hf_hub_download, login, upload_file
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-tfidf_matrix = None
 nn_model = None
 movie_id_to_index = None
 index_to_movie_id = None
@@ -22,7 +21,7 @@ def load_artifacts():
     # prevents files from being downloaded again.
     if (
         nn_model is not None
-        and tfidf_matrix is not None
+        and index_to_movie_id is not None
         and movie_id_to_index is not None
     ):
         return
@@ -30,11 +29,6 @@ def load_artifacts():
     NN_MODEL_PATH = hf_hub_download(
         repo_id=hugging_repo,
         filename="nearest_neighbors_model.pkl"
-    )
-
-    TFIDF_PATH = hf_hub_download(    
-        repo_id=hugging_repo, 
-        filename='tfidf_matrix.pkl'
     )
 
     MOVIE_ID_TO_INDEX_PATH = hf_hub_download(
@@ -45,9 +39,6 @@ def load_artifacts():
         repo_id=hugging_repo,
         filename='index_to_movie_id.pkl'
     )
-
-    with open(TFIDF_PATH, 'rb') as f:
-        tfidf_matrix = pickle.load(f)
 
     with open(NN_MODEL_PATH, 'rb') as f:
         nn_model = pickle.load(f)
@@ -65,7 +56,7 @@ def load_artifacts():
 def get_similar_movies(movie_id, top_n=10, offset=0):
     global tfidf_matrix, nn_model, movie_id_to_index, index_to_movie_id
 
-    if tfidf_matrix is None or nn_model is None:
+    if nn_model is None:
         load_artifacts()
         
     movie_index = movie_id_to_index[movie_id]
@@ -74,10 +65,9 @@ def get_similar_movies(movie_id, top_n=10, offset=0):
         return []
 
     distances, indices = nn_model.kneighbors(
-        tfidf_matrix[movie_index],
+        nn_model._fit_X[movie_index],
         n_neighbors = top_n + offset + 1
     )
-    print("Calculating distances")
 
     similar_indices = indices.flatten()[1 + offset : top_n + offset + 1]
 
