@@ -57,7 +57,7 @@ const StarRating = ({ movieId }) => {
 
         try {
             // api endpoint not yet setup, but table is created
-            const response = await authFetch(`${config.API_URL}:5000/api/rating`, {
+            const response = await authFetch(`${config.API_URL}/api/rating`, {
                 method: "POST",
                 body: JSON.stringify({
                     movieId: movieId,

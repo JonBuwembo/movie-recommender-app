@@ -21,15 +21,12 @@ const MovieDetails = () => {
 
     const containerRef = useRef(null);
 
-    // const [canScrollLeft, setCanScrollLeft] = react.useState(false);
-    // const [canScrollRight, setCanScrollRight] = react.useState(true);
-
 
     const [moviePoster, setMoviePoster] = react.useState('');
     const [movieSummary, setMovieSummary] = react.useState('');
     const [movieGenres, setMovieGenres] = react.useState([]);
     const [movieReleaseYear, setMovieReleaseYear] = react.useState('');
-    // const [movieRating, setMovieRating] = react.useState('');
+
     const [movieTitle, setMovieTitle] = react.useState('');
 
 
@@ -144,7 +141,7 @@ const MovieDetails = () => {
                 })
             }
 
-            const response = await authFetch(`${config.API_URL}:5000/api/watched`, options)
+            const response = await authFetch(`${config.API_URL}/api/watched`, options)
             .catch(error => {
                 if (error.message === "Unauthorized") {
                     return;

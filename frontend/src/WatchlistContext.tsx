@@ -5,6 +5,7 @@ import {
     useState
 } from "react";
 import { useAuth } from "./AuthContext";
+import config from "./config";
 
 type WatchlistMovie = {
     movie_id: number
@@ -30,7 +31,7 @@ export const WatchlistProvider = ({children}: { children: React.ReactNode}) => {
     // load watchlist with the watchlist data in the database! Crucial.
     useEffect(() => {
         if (!userId) return;
-        authFetch(`http://localhost:5000/api/watchlist`)
+        authFetch(`${config.API_URL}/api/watchlist`)
             .then(response => response.json())
             .then(data => setWatchlist(data.map((movie : WatchlistMovie) => ({ movie_id: movie.movie_id }))))
             .catch(err => console.error(err));

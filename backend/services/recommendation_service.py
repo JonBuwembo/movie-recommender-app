@@ -59,7 +59,13 @@ def load_svd_artifacts():
         in movie_map.items()
     }
 
+
 def get_recommendations():
+
+    """
+    Collaberative Filtering
+    """
+
     global movie_embeddings, movie_map, user_map
 
     if movie_embeddings is None:
@@ -139,15 +145,17 @@ def get_recommendations():
     )
 
     # we return the top N movies and iterate over each using helper to get info of those movies from db
-    movie_lookup = get_movie_lookup()
-
     recommendations = []
 
 
-    for movie in scores[:limit]:
-        movie_id = int(movie["movie_id"])
+    top_movies = scores[:limit]
 
-        movie_info = movie_lookup.get(movie_id, {})
+    movie_ids = [int(movie["movie_id"]) for movie in top_movies]
+    movie_lookup = get_movie_lookup(movie_ids)
+
+    for movie in top_movies:
+        movie_id = int(movie["movie_id"])
+        movie_info = movie_lookup[movie_id]
 
         recommendations.append({
             "movie_id": movie_id,
@@ -194,7 +202,7 @@ def get_rating_metrics_service(movie_id):
         return jsonify({"error" : "metrics for rating have failed to be captured"})
 
 
-def get_movie_lookup():
+def get_movie_lookup(movie_ids):
 
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -213,6 +221,7 @@ def get_movie_lookup():
             FROM movies m
             JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
             JOIN genres g ON mg.genre_id = g.genre_id
+            WHERE m.movie_id = ANY(%s)
             GROUP BY 
                 m.movie_id, 
                 m.title, 
@@ -225,7 +234,7 @@ def get_movie_lookup():
             
         """
 
-        cursor.execute(query)
+        cursor.execute(query, (movie_ids,))
         rows = cursor.fetchall()
 
         movie_lookup = {
@@ -240,8 +249,8 @@ def get_movie_lookup():
             }
             for row in rows
         }
-
         return movie_lookup
+
     finally:
         connection.close()
         cursor.close()
@@ -292,11 +301,11 @@ def because_you_watched_service():
 
         rec_movie_ids = get_similar_movies(movie["movie_id"], 10, offset=0)
         
-        movie_lookup = get_movie_lookup()
+        movie_lookup = get_movie_lookup(rec_movie_ids)
         movies = []
 
-        for movie_id in rec_movie_ids:
-            movie_info = movie_lookup.get(movie_id["movie_id"], {})
+        for movie_id in movie_lookup:
+            movie_info = movie_lookup.get(movie_id, {})
             movies.append(movie_info)
 
         return jsonify({

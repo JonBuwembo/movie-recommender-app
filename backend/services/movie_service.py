@@ -204,7 +204,6 @@ def get_movie_details_service(movie_id):
         selected_movie["genres"] = selected_movie["genres"] or "Other"
 
         top_recommendation_ids = get_similar_movies(selected_movie["movie_id"], 10, offset=0)
-        top_recommendation_ids = [rec["movie_id"] for rec in top_recommendation_ids]
 
         query_recs = """
                  SELECT 
@@ -241,7 +240,6 @@ def get_movie_details_service(movie_id):
 
         
         for rec in top_recommendations:
-            # rec['rating_avg'] = safe_number(rec.get('rating_avg'))
             rec['release_year'] = safe_number(rec.get('release_year'))
             rec["genres"] = rec["genres"] or "Other"
             if rec['overview'] is None:

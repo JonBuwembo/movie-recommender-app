@@ -109,7 +109,7 @@ const MoviesDisplay = () => {
     const fetchWatchlist = react.useCallback(() => {
         setSelectedGenre(null);
         setLoading(true);
-        const fetchURL = `${config.API_URL}0/api/watchlist`
+        const fetchURL = `${config.API_URL}/api/watchlist`
 
 
         authFetch(fetchURL)

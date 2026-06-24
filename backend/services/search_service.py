@@ -90,15 +90,15 @@ def search_movies_services(movie):
         movie_lookup = get_movie_lookup()
         top_results_list = []
 
-        for movie in top_results:
-            movie_info = movie_lookup.get(movie["movie_id"], {})
+        for movie_id in top_results:
+            movie_info = movie_lookup.get(movie_id, {})
             top_results_list.append(movie_info)
 
-        similar_movies = get_similar_movies(movie_id, 30, offset=10)
+        similar_movie_ids = get_similar_movies(movie_id, 30, offset=10)
         similar_movies_list = []
 
-        for movie in similar_movies:
-            movie_info = movie_lookup.get(movie["movie_id"], {})
+        for movie_id in similar_movie_ids:
+            movie_info = movie_lookup.get(movie_id, {})
             similar_movies_list.append(movie_info)
 
         print(top_results_list[0])

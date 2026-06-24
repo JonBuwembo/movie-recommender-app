@@ -1,6 +1,6 @@
 import { useAuth } from "./AuthContext";
 import { useWatchlistContext } from "./WatchlistContext";
-
+import config from "./config";
 
 export const useWatchlist = () => {
 
@@ -10,7 +10,7 @@ export const useWatchlist = () => {
 
     const addToWatchlist = async (movieId: number) => {
             try {
-                const response = await authFetch(`http://localhost:5000/api/watchlist/${movieId}`, { 
+                const response = await authFetch(`${config.API_URL}/api/watchlist/${movieId}`, { 
                     method: "POST"
                 }).catch(error =>
                     {
@@ -47,7 +47,7 @@ export const useWatchlist = () => {
     
             try {
                 const response = await authFetch(
-                    `http://localhost:5000/api/watchlist/${movieId}`, {
+                    `${config.API_URL}/api/watchlist/${movieId}`, {
                         method: "DELETE"
                     }
                 ).catch(error =>

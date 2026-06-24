@@ -55,7 +55,5 @@ def get_similar_movies(movie_id, top_n=10, offset=0):
     movie_ids = neighbor_matrix[movie_index]
     similar_movie_ids = movie_ids[1 + offset : top_n + offset + 1]
 
-    return [
-        {"movie_id" : int(movie_id)}
-        for movie_id in similar_movie_ids
-    ]
+    return [int(movie_id) for movie_id in similar_movie_ids]
+    
