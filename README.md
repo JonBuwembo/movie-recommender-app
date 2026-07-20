@@ -133,7 +133,7 @@ npm start
 - [x] Content-based recommendations
 - [x] Collaborative filtering
 - [x] Responsive mobile interface
-- [ ] Recommendation explanations
+- [x] Recommendation explanations
 - [ ] Redis caching
 - [ ] Docker support
 - [ ] Admin dashboard
