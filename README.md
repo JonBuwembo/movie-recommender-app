@@ -49,11 +49,11 @@ The app provides collaborative based filtering and content based filtering to so
 
 | Home | Details |
 |-------------|---------------|
-| ![](frontend/public/home.png) | ![](frontend/public/details.png) |
+| ![](frontend/public/images/home.png) | ![](frontend/public/images/details.png) |
 
 | watchlist | chatbot |
 |---------------|--------------|
-| ![](frontend/public/watchlist.png) | ![](frontend/public/chatbot.png) |
+| ![](frontend/public/images/watchlist.png) | ![](frontend/public/images/chatbot.png) |
 
 ## Architecture
 ```text
