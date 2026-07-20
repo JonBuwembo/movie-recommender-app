@@ -1,20 +1,25 @@
-from database.db_connection import get_db_connection
-from models.content_based import get_similar_movies
-from werkzeug.exceptions import HTTPException
-from huggingface_hub import hf_hub_download
-from flask import jsonify, request
+from threading import Thread, Lock
 import app
 from app import db
 import math
 import numpy as np
 import time
+import traceback
 
 from pathlib import Path
 import joblib
 
+from werkzeug.exceptions import HTTPException
+from flask import jsonify, request
+
+
+from database.db_connection import get_db_connection
 from models.movie_model import (WatchedMovie, Rating)
+from models.content_based import get_similar_movies
 from services.movie_service import safe_number
 from utils.auth_utils import ( get_current_user )
+from training.train_svd import retrain_model
+from recommender.model_store import reload_svd_model, get_model
 
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,41 +31,29 @@ reverse_movie_map = None
 
 hugging_repo="JonBuwembo/movie-recommender-models"
 
-def load_svd_artifacts():
-    global model, movie_embeddings, movie_map, user_map, reverse_movie_map
+retrain_lock = Lock()
+is_retraining = False
 
-    if model is not None:
+# prevent race conditions when many users are using the app and
+# model needs retraining for users.
+def trigger_retrain():
+    global is_retraining, model_embeddings
+
+    if is_retraining:
         return
+    
+    model_embeddings = None
 
-    model_path = hf_hub_download(
-        repo_id=hugging_repo,
-        filename="svd.pkl"
-    )
+    def run():
+        global is_retraining
 
-    movie_path = hf_hub_download(
-        repo_id=hugging_repo,
-        filename="movie_map.pkl"
-    )
-    user_path = hf_hub_download(
-        repo_id=hugging_repo,
-        filename="user_map.pkl"
-    )
+        try:
+            is_retraining = True
+            retrain_model()
+        finally:
+            is_retraining = False
 
-    model_data = joblib.load(model_path)
-    movie_map = joblib.load(movie_path)
-    user_map = joblib.load(user_path)
-
-    model = model_data["model"]
-    movie_embeddings = model_data["movie_embeddings"]
-
-    reverse_movie_map = {
-        col_id : movie_id
-        for movie_id, col_id
-        in movie_map.items()
-    }
-
-
-def get_recommendations():
+def get_recommendations_service():
 
     """
     Collaberative Filtering
@@ -68,107 +61,234 @@ def get_recommendations():
 
     global movie_embeddings, movie_map, user_map
 
-    if movie_embeddings is None:
-        load_svd_artifacts()
+    try:
+        user_id = get_current_user(request)
 
-    user_id = get_current_user(request)
-    limit = int(request.args.get("limit", 18))
+        if not user_id:
+            return jsonify({
+                "message" : "Unauthorized"
+            }), 401
 
+        limit = int(request.args.get("limit", 12))
+        ratings = Rating.query.filter_by(user_id=user_id).all()
+        rating_count = len(ratings)
 
-    if not user_id:
-        return jsonify({
-            "message": "Unauthorized"
-        }), 401
+        if rating_count == 0:
+            return get_popular_movies(limit)
+        elif rating_count < 5:
+            return get_content_based_recommendation(limit)
+        elif rating_count % 5 == 0:
+            print("retraining")
+            trigger_retrain() 
     
-    if user_id not in user_map:
-        return jsonify({
-            "message": "No recommendation profile for user"
-        }), 404
+        model = get_model()
+        user_map = model.user_map
+        movie_map = model.movie_map
+        movie_embeddings = model.movie_embeddings
+        reverse_movie_map = model.reverse_movie_map
 
-    # extract user index for matrix.
-    user_idx = user_map[user_id]
+        
+        if user_id not in user_map:
+            return jsonify({
+                "message": "No recommendation profile for user"
+            }), 404
 
-    # fetch all user interactions, what user already saw
-    watched = WatchedMovie.query.filter_by(user_id=user_id).all()
-    rated = Rating.query.filter_by(user_id=user_id).all()
+        # extract user index for matrix.
+        user_idx = user_map[user_id]
 
-    watched_movie_ids = {
-        movie.movie_id
-        for movie in watched
-    }
+        # fetch all user interactions, what user already saw
+        watched = WatchedMovie.query.filter_by(user_id=user_id).all()
+        rated = Rating.query.filter_by(user_id=user_id).all()
 
-    rated_movie_ids = {
-        movie.movie_id
-        for movie in rated
-    }
+        watched_movie_ids = {
+            movie.movie_id
+            for movie in watched
+        }
 
-    excluded_movies =  watched_movie_ids | rated_movie_ids
+        rated_movie_ids = {
+            movie.movie_id
+            for movie in rated
+        }
 
-    user_vector = np.zeros(movie_embeddings.shape[1])
-    user_ratings = Rating.query.filter_by(
-        user_id=user_id
-    ).all()
+        excluded_movies =  watched_movie_ids | rated_movie_ids
+
+        user_vector = np.zeros(movie_embeddings.shape[1])
+        user_ratings = Rating.query.filter_by(
+            user_id=user_id
+        ).all()
 
 
-    # higher ratings influence taste more so we multiply each latent factor for a particular movie by its rating.
-    for rating in user_ratings:
-        if rating.movie_id not in movie_map:
-            continue
+        # higher ratings influence taste more so we multiply each latent factor for a particular movie by its rating.
+        for rating in user_ratings:
+            if rating.movie_id not in movie_map:
+                continue
 
-        movie_idx = movie_map[rating.movie_id]
+            movie_idx = movie_map[rating.movie_id]
 
-        movie_vector = (
-            movie_embeddings[movie_idx]
+            movie_vector = (
+                movie_embeddings[movie_idx]
+            )
+
+            user_vector += ( movie_vector * rating.rating)
+
+        scores = []
+
+        for movie_idx, movie_vector in enumerate(movie_embeddings):
+            movie_id = reverse_movie_map[movie_idx]
+
+            if movie_id in excluded_movies:
+                continue
+
+            score = np.dot(user_vector, movie_vector)
+
+            scores.append({
+                "movie_id" : movie_id,
+                "score" : float(score)
+            })
+
+        # movies ranked best -> worst. ordered by the score.
+        scores.sort(
+            key= lambda x: x["score"],
+            reverse=True
         )
 
-        user_vector += ( movie_vector * rating.rating)
+        # we return the top N movies and iterate over each using helper to get info of those movies from db
+        recommendations = []
 
-    scores = []
 
-    for movie_idx, movie_vector in enumerate(movie_embeddings):
-        movie_id = reverse_movie_map[movie_idx]
+        top_movies = scores[:limit]
 
-        if movie_id in excluded_movies:
-            continue
+        movie_ids = [int(movie["movie_id"]) for movie in top_movies]
+        movie_lookup = get_movie_lookup(movie_ids)
 
-        score = np.dot(user_vector, movie_vector)
+        for movie in top_movies:
+            movie_id = int(movie["movie_id"])
+            movie_info = movie_lookup.get(movie_id, {})
 
-        scores.append({
-            "movie_id" : movie_id,
-            "score" : float(score)
-        })
+            recommendations.append({
+                "movie_id": movie_id,
+                **movie_info
+            })
 
-    # movies ranked best -> worst. ordered by the score.
-    scores.sort(
-        key= lambda x: x["score"],
+        recommended_information = {
+            "message" : "Successfully retrieved collaborative recommendations! ",
+            "recommendations" : recommendations
+        }
+
+        return jsonify(recommended_information)
+    except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
+        return jsonify({"error" : f"ERROR --> {e}"})
+        raise
+
+def get_content_based_recommendation(limit):
+
+    # get the movies the user rated
+    user_id  = get_current_user(request)
+    ratings = Rating.query.filter_by(user_id=user_id).all()
+    movie_ids = [rating.movie_id for rating in ratings]
+
+    scores = {}
+    watched = set()
+
+    for r in ratings:
+        movie_id = r.movie_id
+        rating_weight = r.rating
+
+        watched.add(movie_id)
+
+        similar_movies = get_similar_movies(movie_id)
+
+        # Decay weight based on position in KNN
+        for i, mid in enumerate(similar_movies):
+
+            # skip movies that are watched already (dont recommend movies they already saw)
+            if mid in watched:
+                continue
+
+            # Ensures top KNN matter more.
+            weight = rating_weight * (1 / (i + 1))
+
+            # Preference strength: higher rated movies matter more.
+            # scores that appear in multiple movies get rewarded by score accumulation.
+            scores[mid] = (weight + scores.get(mid, 0))
+
+    top_movies = sorted(
+        scores.items(), # scores converted into tuple (movie_id, score)
+        key=lambda x: x[1], # sorted by score
         reverse=True
     )
 
-    # we return the top N movies and iterate over each using helper to get info of those movies from db
+    # get a certain number of movie_ids (the limit)
+    movie_ids = [movie_id for movie_id, _ in top_movies[:limit]]
+
+    # look up those movies
+    movie_lookup = get_movie_lookup(movie_ids)
     recommendations = []
 
+    for movie_id in movie_ids:
+        movie_info = movie_lookup.get(movie_id, {})
+        recommendations.append(movie_info)
 
-    top_movies = scores[:limit]
-
-    movie_ids = [int(movie["movie_id"]) for movie in top_movies]
-    movie_lookup = get_movie_lookup(movie_ids)
-
-    for movie in top_movies:
-        movie_id = int(movie["movie_id"])
-        movie_info = movie_lookup[movie_id]
-
-        recommendations.append({
-            "movie_id": movie_id,
-            "score" : float(movie["score"]),
-            **movie_info
-        })
-
-    recommended_information = {
-        "message" : "Successfully retrieved collaborative recommendations! ",
+    return jsonify({
+        "message" : "Successfully retrieved content based recommendations based on less than 5 ratings",
         "recommendations" : recommendations
-    }
+    })
 
-    return recommended_information
+
+def get_popular_movies():
+
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        query = """
+        SELECT
+            movie_id,
+            AVG(rating) As avg_rating,
+            COUNT(*) AS vote_count
+        FROM ratings
+        GROUP BY movie_id
+        HAVING COUNT(*) >= 1
+        ORDER BY avg_rating DESC, vote_count DESC
+        """
+
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        movie_ids = [row["movie_id"] for row in results]
+        movie_lookup = get_movie_lookup(movie_ids)
+
+        movies = []
+
+        for movie in results:
+            movie_id = int(movie["movie_id"])
+            movie_info = movie_lookup.get(movie_id, {})
+            
+            movies.append({
+                "movie_id" : movie_id,
+                **movie_info
+            })
+
+        recommended_information = {
+            "message" : "Successfully retrieved collaborative recommendations! ",
+            "recommendations" : movies
+        }
+
+        return jsonify(recommended_information)
+
+    except Exception as e:
+        print(f"Error, unable to retrieve popular movies: {e}")
+        return jsonify({"error" : f"Unable to retrieve popular movies {e}"})
+    finally:
+        if connection:
+            connection.close()
+        if cursor:
+            cursor.close()
 
 def get_rating_metrics_service(movie_id):
 
@@ -182,13 +302,20 @@ def get_rating_metrics_service(movie_id):
         query = """
         SELECT
             AVG(rating) AS avg_rating,
-            COUNT(user_id) AS vote_count
+            COUNT(*) AS vote_count
         FROM ratings
         WHERE movie_id = %s
+        GROUP BY movie_id
         """
 
         cursor.execute(query, (movie_id,))
         results = cursor.fetchone()
+
+        if results is None:
+            return jsonify({
+                "avg_rating" : 0,
+                "vote_count" : 0
+            })
 
         return jsonify({
             "avg_rating" : results["avg_rating"],
@@ -200,6 +327,9 @@ def get_rating_metrics_service(movie_id):
     except Exception as e:
         print(f"Error getting metrics: {e}")
         return jsonify({"error" : "metrics for rating have failed to be captured"})
+    finally:
+        connection.close()
+        cursor.close()
 
 
 def get_movie_lookup(movie_ids):
@@ -298,6 +428,14 @@ def because_you_watched_service():
 
         cursor.execute(query, (user_id,))
         movie = cursor.fetchone()
+
+        # new users
+        if movie is None:
+            return jsonify({
+                "movie_title": None,
+                "recs": [],
+                "message": "User has not watched any movies yet."
+            })
 
         rec_movie_ids = get_similar_movies(movie["movie_id"], 10, offset=0)
         

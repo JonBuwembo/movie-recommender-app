@@ -7,7 +7,6 @@
     transition: transform 0.2s;
     background-color: #fff;
     flex-shrink: 0;
-    height: 300px;
     position: relative;
 }
 

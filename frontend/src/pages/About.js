@@ -5,7 +5,7 @@ import '../styles/about.css';
 const About = () => {
 
     return (
-        <> 
+        <div className="about-page"> 
             <Navbar />
             <div className="about-wrapper">
                 
@@ -57,7 +57,7 @@ const About = () => {
                 </main>
 
             </div>
-        </>
+        </div>
     );
 }
 

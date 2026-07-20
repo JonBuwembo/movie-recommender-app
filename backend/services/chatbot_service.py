@@ -260,7 +260,7 @@ def ask_qwen(user_input, intent):
         return data["response"]
     except requests.exceptions.RequestException:
         return (
-            "The AI assistant is currently unavailable"
+            "The AI assistant is currently unavailable.\n"
             "Movie search and recommendations are still working."
         )
 

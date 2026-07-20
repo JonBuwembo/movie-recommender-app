@@ -19,6 +19,7 @@ export const useWatchlist = () => {
                         }
 
                         console.log(error)
+                        throw error;
                     }
                 )
 
@@ -39,6 +40,7 @@ export const useWatchlist = () => {
                    return;
                 }
                 console.error(error)
+                throw error;
             }
 
         }

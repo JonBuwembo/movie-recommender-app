@@ -460,3 +460,98 @@
     fill: white;
     stroke: white;
 }
+
+@media (max-width: 768px) {
+
+    .grid-wrapper {
+        grid-template-columns: 1fr !important;
+        grid-template-areas: 
+            "poster"
+            "info";
+        gap: 24px;
+        padding: 16px;
+    }
+
+    .movie-poster {
+        grid-area: poster;
+
+        width: 100%;
+        max-width: 320px;
+
+        margin: 0 auto;
+
+        height: auto !important;
+    }
+
+    .movie-poster img {
+        display: block;
+
+        width: 100%;
+        height: auto !important;
+
+        object-fit: cover;
+        border-radius: 18px;
+    }
+
+    .movie-details-info {
+        padding: 20px;
+    }
+
+    .movie-details-info h2 {
+        font-size: 1.8rem;
+        text-align: center;
+    }
+
+    .movie-details-info p {
+        width: 100%;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .community-rating-pill {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .rating-box {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .movie-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .watchlist-btn,
+    .completed-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .recommendations {
+        padding: 16px !important;
+    }
+
+    .similar-title {
+        text-align: center;
+    }
+
+    .scroll-btn {
+        display: none;
+    }
+
+    .movie-details-info h2 {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+    }
+
+    .movie-details-info h2 span {
+        font-size: 1rem;
+        opacity: 0.8;
+        font-weight: 500;
+    }
+}

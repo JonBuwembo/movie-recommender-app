@@ -5,28 +5,38 @@
     display: flex;
     justify-content: center;
 
-
-
-    min-height: 100vh;
-
     /* For the background video*/
     overflow: hidden;
-    width: 100%;
+    width: 100% !important;
     position: relative; /* For layering elements*/
 }
 
 .all-content {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     padding: 20px;
     color: white;
     gap: 10px;
-    width: min(700px, 90%);
+    width: 100%;
+    max-width: 700px;
 
     z-index: 2;
     position: relative;
 }
+
+@media (max-width: 768px) {
+    .all-content {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .about-section,
+    .about-hero {
+        border-radius: 8px;
+    }
+}
+
 
 #about-title {
     font-size: 3rem;
@@ -53,6 +63,7 @@
 
 .about-section,
 .about-hero {
+    width: 100%;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
 
@@ -68,6 +79,7 @@
 .about-hero {
     text-align: center;
     padding: 34px 26px;
+    width: 100%;
 }
 
 .about-section h3 {
@@ -97,8 +109,4 @@
 
 .about-section li {
     margin-bottom: 8px;
-}
-
-#about-title {
-    
 }

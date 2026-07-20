@@ -10,7 +10,7 @@
 
 
     color: white;
-    padding: 32px;
+    padding: 0 52px 42px 52px;
 
       /* Center everything */
     display: flex;
@@ -18,8 +18,8 @@
     align-items: center; 
 
     /* Prevents wide monitors from spreading all contents of page*/
+    width: 100%;
     max-width: 1600px;
-
 }
 
 .hero-section {
@@ -91,7 +91,12 @@ button:active {
     margin-left: auto;
 }
 
-
+.display-gap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 30px;
+}
 .nav-search-input {
     width: 230px;
     padding: 12px;
@@ -138,4 +143,35 @@ button:active {
     font-weight: 600;
     margin-bottom: 10px;
     margin-top: 20px;
+}
+
+/*For mobile phone*/
+@media (max-width: 768px) {
+    .landing-main {
+        padding: 0 16px 24px;
+    }
+
+    .hero-title {
+        font-size: 2.4rem;
+        text-align: center;
+    }
+
+    .hero-text {
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+
+    .landing-subheader {
+        font-size: 24px;
+    }
+
+    .movie-row {
+        padding-bottom: 8px;
+    }
+
+
 }

@@ -12,13 +12,9 @@ from services.movie_service import (
     get_rating_service
 )
 
-# from services.recommendation_service import (
-#     get_recommendations
-# )
-
 from services.recommendation_service import (
     get_rating_metrics_service,
-    get_recommendations,
+    get_recommendations_service,
     because_you_watched_service
 )
 
@@ -59,19 +55,7 @@ def handle_rating():
 
 @movies_bp.route("/api/recommendations", methods=["GET"])
 def recommendations():
-
-    user_id = get_current_user(request)
-
-    if not user_id:
-        return jsonify({
-            "message" : "Unauthorized"
-        }), 401
-    
-    recommended_info = get_recommendations()
-
-    return jsonify({
-        "recommendations" : recommended_info
-    })
+    return get_recommendations_service()
 
 @movies_bp.route('/api/rating/<int:movie_id>', methods=['GET'])
 def get_rating(movie_id):

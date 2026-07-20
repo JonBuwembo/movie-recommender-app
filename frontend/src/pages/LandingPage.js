@@ -49,7 +49,7 @@ const LandingPage = () => {
                     console.error(error);
                 });
 
-                console.timeEnd("authFetch");
+            
                 const data = await response.json();
 
                 if(!response.ok) {
@@ -57,8 +57,10 @@ const LandingPage = () => {
                     return;
                 }
 
-                setRecommendations(data.recommendations.recommendations);
-                console.timeEnd("recommendations");
+                setRecommendations(data.recommendations);
+                console.log("recommendation: ", recommendations)
+                
+
 
             } catch (err) {
                 console.error("Error with recommendations:", err);
@@ -116,19 +118,28 @@ const LandingPage = () => {
 
 
                 {/* Show recommended movies */}
-                <h2 className='landing-subheader'>Recommended For You </h2>
+                <div className='display-gap'>
+                    <h2 className='landing-subheader'>Recommended For You </h2>
 
-                <div className='movie-row'>
-                    {recommendations.map(movie => (
-                        <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                    <div className='movie-row'>
+                        {recommendations.map(movie => (
+                            <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                    </div>
                 </div>
 
-                <h2 className='landing-subheader'>Because you watched {movieTitle} </h2>
+                {becauseURecs.length > 0 && (
+                    <>
+                        <div className='display-gap'>
+                            <h2 className='landing-subheader'>Because you watched {movieTitle} </h2>
 
-                <div className='movie-row'>
-                    {becauseURecs.map(movie => (
-                        <MovieCard key={movie.movie_id} movie={movie} /> ))}
-                </div>
+                            <div className='movie-row'>
+                                {becauseURecs.map(movie => (
+                                    <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+               
 
             </main>
             <Footer />

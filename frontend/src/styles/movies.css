@@ -1,6 +1,6 @@
 .movies-display {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, 200px) !important;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
     gap: 20px !important;
     padding: 20px;
     justify-content: center;
@@ -8,14 +8,15 @@
 }
 
 /*means if max width is */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .movies-display {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 150px)); /*adjust min width for smaller screens*/
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /*adjust min width for smaller screens*/
     }
 
     .movie-card {
-        max-width: 150px; /*adjust card width for smaller screens*/
+        width: 100px !important;
     }
+
 }
 
 h2 {

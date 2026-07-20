@@ -85,9 +85,9 @@ def search_movies_services(movie):
         first_movie = cursor.fetchone()
     
         top_results = get_similar_movies(movie_id, 10, offset=0)
-        top_results.insert(0, first_movie) # add the query itself at top of list.
+        top_results.insert(0, first_movie["movie_id"]) # add the query itself at top of list.
 
-        movie_lookup = get_movie_lookup()
+        movie_lookup = get_movie_lookup(top_results)
         top_results_list = []
 
         for movie_id in top_results:
@@ -97,11 +97,13 @@ def search_movies_services(movie):
         similar_movie_ids = get_similar_movies(movie_id, 30, offset=10)
         similar_movies_list = []
 
-        for movie_id in similar_movie_ids:
-            movie_info = movie_lookup.get(movie_id, {})
+  
+        movie_lookup = get_movie_lookup(similar_movie_ids)
+       
+        for similar_movie_id in similar_movie_ids:
+            movie_info = movie_lookup.get(similar_movie_id, {})
             similar_movies_list.append(movie_info)
 
-        print(top_results_list[0])
         
         response = {
             "top_results": top_results_list,

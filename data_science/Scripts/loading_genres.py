@@ -144,14 +144,6 @@ def search_movies(title, release_year):
 
         score = fuzz.WRatio(title.lower(), tmdb_title.lower())
 
-        # print("")
-        # print(
-        #     f"Comparing '{title}' "
-        #     f"to '{tmdb_title}' "
-        #     f"-> {score}"
-        # )
-        # print("")
-
         if score > best_score:
             best_score = score
             best_match = movie
@@ -160,15 +152,6 @@ def search_movies(title, release_year):
     if best_score < 60:
         return None
     
-    # print("")
-    # print("********************")
-    # print(f"BEST match: {best_match}")
-    # print("********************")
-    # print("")
-    # print("********************")
-    # print(results)
-    # print("********************")
-    # print("")
     return best_match
 
 def ensure_genre(cursor, genre_name):
@@ -194,6 +177,8 @@ def ensure_genre(cursor, genre_name):
     row = cursor.fetchone()
     return row["genre_id"] if isinstance(row, dict) else row[0]
 
+def get_movie_credits(tmdb_movie_id):
+    return tmdb_get(f"/movie/{tmdb_movie_id}/credits")
 
 def main(limit=75000):
     connection = get_db_connection()
@@ -205,11 +190,9 @@ def main(limit=75000):
         """
         SELECT m.movie_id, m.title, m.release_year
         FROM movies m
-        LEFT JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
-        WHERE mg.movie_id IS NULL
-            AND m.title IS NOT NULL
-            AND TRIM(m.title) <> ''
-            AND m.movie_id >= 300000
+        INNER JOIN "MovieGenres" mg ON m.movie_id = mg.movie_id
+        WHERE TRIM(m.title) <> ''
+        AND m.director IS NULL
         ORDER BY m.movie_id
         LIMIT %s;
         """,
@@ -244,65 +227,113 @@ def main(limit=75000):
 
             genre_ids = result.get("genre_ids", [])
 
+            tmdb_movie_id = result["id"]
 
-            cursor.execute("SELECT genre_id FROM genres WHERE name = %s", ("Other",))
-            other_genre_id = cursor.fetchone()["genre_id"] # get the id of that entry
+            credits = get_movie_credits(tmdb_movie_id)
 
-            if not genre_ids:
+            if credits:
+                cast = credits.get("cast", [])
+                crew = credits.get("crew", [])
 
-                # add this movie to other category
-                cursor.execute(
-                    """
-                    INSERT INTO "MovieGenres" (movie_id, genre_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING;
-                    """,
-                    (movie_id, other_genre_id)
-                )
-                print(f"Rows inserted: {cursor.rowcount}")
-
-                print(f"Movie was found but No genres found for {title}, added to 'Other' category.")
-
-                matched += 1
-
-                continue
-
-            for tmdb_genre_id in genre_ids:
-                genre_name = tmdb_genres.get(tmdb_genre_id)
-                db_name = GENRE_NAME_MAP.get(genre_name)
+                if cast:
+                    for idx, actor in enumerate(cast[:5]):
+                        actor_name = actor["name"]
+                        cursor.execute(
+                            """
+                            INSERT INTO moviecast (movie_id, actor, cast_order)
+                            VALUES (%s, %s, %s)
+                            ON CONFLICT DO NOTHING
+                            """,
+                            (movie_id, actor_name, idx)
+                        )
+                    print(f"Cast found for {title}")
+                else:
+                    print(f"No cast was found for {title}.")
 
 
-                if not db_name:
-                    continue
+                if crew:
+                    director = None
+                    for member in crew:
+                        if member["job"] == "Director":
+                            director = member["name"]
+                            break
+                    
+                    if director:
+                        cursor.execute(
+                            """ 
+                            UPDATE movies 
+                            SET directors = %s
+                            WHERE movie_id = %s
+                            """,
+                            (director, movie_id)
+                        )
+                        
 
-                cursor.execute(
-                    "SELECT genre_id FROM genres WHERE name = %s",
-                    (db_name,)
-                )
-
-                row = cursor.fetchone()
-
-                if not row:
-                    print(f"Genre not found in database genres table: {db_name}")
-                    continue
-
-                db_genre_id = row["genre_id"]
+                        print(f"Director found for {title}: {director}")
+                else:
+                    print(f"No director found for {title}")
+            else:
+                print(f"credits not found for {title}.")
 
 
-                cursor.execute(
-                    """
-                    INSERT INTO "MovieGenres" (movie_id, genre_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING;
-                    """,
-                    (movie_id, db_genre_id)
-                )
-                print(f"Rows inserted: {cursor.rowcount}")
+            # cursor.execute("SELECT genre_id FROM genres WHERE name = %s", ("Other",))
+            # other_genre_id = cursor.fetchone()["genre_id"] # get the id of that entry
+
+            # if not genre_ids:
+
+            #     # add this movie to other category
+            #     cursor.execute(
+            #         """
+            #         INSERT INTO "MovieGenres" (movie_id, genre_id)
+            #         VALUES (%s, %s)
+            #         ON CONFLICT DO NOTHING;
+            #         """,
+            #         (movie_id, other_genre_id)
+            #     )
+            #     print(f"Rows inserted: {cursor.rowcount}")
+
+            #     print(f"Movie was found but No genres found for {title}, added to 'Other' category.")
+
+            #     matched += 1
+
+            #     continue
+
+            # for tmdb_genre_id in genre_ids:
+            #     genre_name = tmdb_genres.get(tmdb_genre_id)
+            #     db_name = GENRE_NAME_MAP.get(genre_name)
+
+
+            #     if not db_name:
+            #         continue
+
+            #     cursor.execute(
+            #         "SELECT genre_id FROM genres WHERE name = %s",
+            #         (db_name,)
+            #     )
+
+            #     row = cursor.fetchone()
+
+            #     if not row:
+            #         print(f"Genre not found in database genres table: {db_name}")
+            #         continue
+
+            #     db_genre_id = row["genre_id"]
+
+
+            #     cursor.execute(
+            #         """
+            #         INSERT INTO "MovieGenres" (movie_id, genre_id)
+            #         VALUES (%s, %s)
+            #         ON CONFLICT DO NOTHING;
+            #         """,
+            #         (movie_id, db_genre_id)
+            #     )
+            #     print(f"Rows inserted: {cursor.rowcount}")
             
-            matched += 1
-            print(f"Added genres for {title}: {[tmdb_genres[g] for g in genre_ids if g in tmdb_genres]}")
+            # matched += 1
+            # print(f"Added genres for {title}: {[tmdb_genres[g] for g in genre_ids if g in tmdb_genres]}")
 
-            time.sleep(0.25)
+            # time.sleep(0.25)
 
         except Exception as e:
             print(f"Error on {title}: {e}")

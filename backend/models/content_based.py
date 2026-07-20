@@ -56,4 +56,3 @@ def get_similar_movies(movie_id, top_n=10, offset=0):
     similar_movie_ids = movie_ids[1 + offset : top_n + offset + 1]
 
     return [int(movie_id) for movie_id in similar_movie_ids]
-    

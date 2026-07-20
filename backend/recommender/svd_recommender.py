@@ -1,5 +1,6 @@
 
 import joblib
+import os
 from sklearn.decomposition import (
     TruncatedSVD
 )
@@ -17,28 +18,45 @@ class SVDRecommender:
         )
 
         self.movie_embeddings = None
+        self.movie_map = None
+        self.user_map = None
+        self.reverse_movie_map = None
 
-    def train(self, matrix):
+    def train(self, matrix, movie_map=None, user_map=None):
         self.model.fit(matrix)
+
         self.movie_embeddings = self.model.components_.T
+
+        self.movie_map = movie_map
+        self.user_map = user_map
+
+        if movie_map:
+            self.reverse_movie_map = {
+                col_id: movie_id
+                for movie_id, col_id, in movie_map.items()
+            }
+        
+        return self
         
 
     def save(self, path):
-        joblib.dump(
-            {
-                "model" : self.model,
-                "movie_embeddings" : self.movie_embeddings
-            },
-            path
-        )
+        # tmp_path = str(path) + ".tmp"
+        joblib.dump(self, path)
+        # os.replace(tmp_path, path)
     
     def load(self, path):
-        data = joblib.load(path)
-        self.model = data["model"]
+        return joblib.load(path)
+    
 
-        self.movie_embeddings = (
-            data[
-                "movie_embeddings"
-            ]
-        )
+    # HELPER ---------------------------------
+    def get_movie_vector(self, movie_id):
+        if self.movie_map is None:
+            raise ValueError("Movie map is not found")
+        
+        if movie_id not in self.movie_map:
+            return None
+
+        index = self.movie_map[movie_id]
+        return self.movie_embeddings[index]
+
 
