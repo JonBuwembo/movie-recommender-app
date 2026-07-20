@@ -51,7 +51,7 @@ The app provides collaborative based filtering and content based filtering to so
 |-------------|---------------|
 | ![](frontend/public/images/home.png) | ![](frontend/public/images/details.png) |
 
-| watchlist | chatbot |
+| Watchlist | Chatbot |
 |---------------|--------------|
 | ![](frontend/public/images/watchlist.png) | ![](frontend/public/images/chatbot.png) |
 
@@ -73,6 +73,16 @@ Content-Based      Collaborative
                  │
             PostgreSQL
 ```
+## REST API
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/recommendations` | Personalized movie recommendations |
+| GET | `/api/because-you-watched` | Similar movies based on watch history |
+| GET | `/api/details/{id}` | Retrieve movie information |
+| POST | `/api/rating` | Submit a movie rating |
+| GET | `/api/watchlist` | Retrieve user's watchlist |
+
 ## Recommendation Engine
 
 ### Collaborative Filtering
