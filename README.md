@@ -119,7 +119,7 @@ cd movie-recommender
 ```
 
 ### Run Server (Backend)
-Navigate to the backend folder to run the flask server:
+Navigate to the backend directory to run the flask server:
 
 ```bash
 cd backend
