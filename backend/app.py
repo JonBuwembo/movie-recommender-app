@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -22,6 +23,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
@@ -36,18 +38,19 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
+    migrate.init_app(app, db)
 
     # register blueprints (bundles of routes)
-    from routes.auth import auth_bp
+    from backend.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
 
-    from routes.movies import movies_bp
+    from backend.routes.movies import movies_bp
     app.register_blueprint(movies_bp)
 
-    from routes.search import search_bp
+    from backend.routes.search import search_bp
     app.register_blueprint(search_bp)
 
-    from routes.chatbot import chatbot_bp
+    from backend.routes.chatbot import chatbot_bp
     app.register_blueprint(chatbot_bp)
 
     return app

@@ -9,8 +9,11 @@ export const useWatchlist = () => {
     const {watchlist, setWatchlist} = useWatchlistContext();
 
     const addToWatchlist = async (movieId: number) => {
+
+        console.log("attempting to ADD to watchlist....")
             try {
-                const response = await authFetch(`${config.API_URL}/api/watchlist/${movieId}`, { 
+                const response = await authFetch(
+                    `${config.API_URL}/api/watchlist/${movieId}`, { 
                     method: "POST"
                 }).catch(error =>
                     {
@@ -46,7 +49,8 @@ export const useWatchlist = () => {
         }
     
         const removeFromWatchlist = async (movieId: number) => {
-    
+            
+            console.log("We are removing from watchlist now.")
             try {
                 const response = await authFetch(
                     `${config.API_URL}/api/watchlist/${movieId}`, {

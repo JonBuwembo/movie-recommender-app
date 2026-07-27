@@ -1,6 +1,6 @@
 from threading import Thread, Lock
-import app
-from app import db
+import backend.app
+from backend.app import db
 import math
 import numpy as np
 import time
@@ -13,13 +13,13 @@ from werkzeug.exceptions import HTTPException
 from flask import jsonify, request
 
 
-from database.db_connection import get_db_connection
-from models.movie_model import (WatchedMovie, Rating)
-from models.content_based import get_similar_movies
-from services.movie_service import safe_number
-from utils.auth_utils import ( get_current_user )
-from training.train_svd import retrain_model
-from recommender.model_store import reload_svd_model, get_model
+from backend.database.db_connection import get_db_connection
+from backend.models.movie_model import (WatchedMovie, Rating)
+from backend.models.content_based import get_similar_movies
+from backend.services.movie_service import safe_number
+from backend.utils.auth_utils import ( get_current_user )
+from backend.training.train_svd import retrain_model
+from backend.recommender.model_store import reload_svd_model, get_model, get_movie_embeddings, get_movie_map, get_reverse_movie_map, get_user_map
 
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,21 +37,17 @@ is_retraining = False
 # prevent race conditions when many users are using the app and
 # model needs retraining for users.
 def trigger_retrain():
-    global is_retraining, model_embeddings
+    global is_retraining
 
     if is_retraining:
         return
-    
-    model_embeddings = None
 
-    def run():
-        global is_retraining
+    is_retraining = True
 
-        try:
-            is_retraining = True
-            retrain_model()
-        finally:
-            is_retraining = False
+    try:
+        retrain_model()
+    finally:
+        is_retraining = False
 
 def get_recommendations_service():
 
@@ -60,6 +56,8 @@ def get_recommendations_service():
     """
 
     global movie_embeddings, movie_map, user_map
+
+    print(">>> Entered get_recommendations_service")
 
     try:
         user_id = get_current_user(request)
@@ -80,18 +78,22 @@ def get_recommendations_service():
         elif rating_count % 5 == 0:
             print("retraining")
             trigger_retrain() 
+
+            print("We are here in recommendations")
     
         model = get_model()
-        user_map = model.user_map
-        movie_map = model.movie_map
-        movie_embeddings = model.movie_embeddings
-        reverse_movie_map = model.reverse_movie_map
+        user_map = get_user_map()
+        movie_map = get_movie_map()
+        movie_embeddings = get_movie_embeddings()
+        reverse_movie_map = get_reverse_movie_map()
 
+        print("Current user:", user_id)
+        print("User map contains:", len(user_map), "users")
+        print("User exists?", user_id in user_map)
         
         if user_id not in user_map:
-            return jsonify({
-                "message": "No recommendation profile for user"
-            }), 404
+            return jsonify({"Error" : "User not in user map"}), 404
+            
 
         # extract user index for matrix.
         user_idx = user_map[user_id]
@@ -184,60 +186,75 @@ def get_recommendations_service():
 
 def get_content_based_recommendation(limit):
 
-    # get the movies the user rated
-    user_id  = get_current_user(request)
-    ratings = Rating.query.filter_by(user_id=user_id).all()
-    movie_ids = [rating.movie_id for rating in ratings]
+    """ 
+    Recommend movies similar to the movies the user already rated.
+    Higher rated movies represent stronger user preferences.
+    Uses Position-Based Decay where a decay fynction ensures closer neighbors recieve larger scores.
+    Movies with multiple user preferences (in more than one KNN list) gets rewarded higher.
+    """
 
-    scores = {}
-    watched = set()
+    try:
 
-    for r in ratings:
-        movie_id = r.movie_id
-        rating_weight = r.rating
+        print("In content based recommendations....")
 
-        watched.add(movie_id)
+        # get the movies the user rated
+        user_id  = get_current_user(request)
+        ratings = Rating.query.filter_by(user_id=user_id).all()
+        movie_ids = [rating.movie_id for rating in ratings]
 
-        similar_movies = get_similar_movies(movie_id)
+        scores = {}
+        watched = set()
 
-        # Decay weight based on position in KNN
-        for i, mid in enumerate(similar_movies):
+        for r in ratings:
+            movie_id = r.movie_id
+            rating_weight = r.rating
 
-            # skip movies that are watched already (dont recommend movies they already saw)
-            if mid in watched:
-                continue
+            watched.add(movie_id)
 
-            # Ensures top KNN matter more.
-            weight = rating_weight * (1 / (i + 1))
+            similar_movies = get_similar_movies(movie_id)
 
-            # Preference strength: higher rated movies matter more.
-            # scores that appear in multiple movies get rewarded by score accumulation.
-            scores[mid] = (weight + scores.get(mid, 0))
+            # Decay weight based on position in KNN
+            for i, mid in enumerate(similar_movies):
 
-    top_movies = sorted(
-        scores.items(), # scores converted into tuple (movie_id, score)
-        key=lambda x: x[1], # sorted by score
-        reverse=True
-    )
+                # skip movies that are watched already (dont recommend movies they already saw)
+                if mid in watched:
+                    continue
 
-    # get a certain number of movie_ids (the limit)
-    movie_ids = [movie_id for movie_id, _ in top_movies[:limit]]
+                # Ensures top KNN matter more. Decay function
+                weight = rating_weight * (1 / (i + 1))
 
-    # look up those movies
-    movie_lookup = get_movie_lookup(movie_ids)
-    recommendations = []
+                # Preference strength: higher rated movies matter more.
+                # scores that appear in multiple movies get rewarded by score accumulation.
+                scores[mid] = (weight + scores.get(mid, 0))
 
-    for movie_id in movie_ids:
-        movie_info = movie_lookup.get(movie_id, {})
-        recommendations.append(movie_info)
+        top_movies = sorted(
+            scores.items(), # scores converted into tuple (movie_id, score)
+            key=lambda x: x[1], # sorted by score
+            reverse=True
+        )
 
-    return jsonify({
-        "message" : "Successfully retrieved content based recommendations based on less than 5 ratings",
-        "recommendations" : recommendations
-    })
+        # get a certain number of movie_ids (the limit)
+        movie_ids = [movie_id for movie_id, _ in top_movies[:limit]]
+
+        # look up those movies
+        movie_lookup = get_movie_lookup(movie_ids)
+        recommendations = []
+
+        for movie_id in movie_ids:
+            movie_info = movie_lookup.get(movie_id, {})
+            recommendations.append(movie_info)
+
+        return jsonify({
+            "message" : "Successfully retrieved content based recommendations based on less than 5 ratings",
+            "recommendations" : recommendations
+        })
+
+    except Exception as e:
+        print(f"Error with content based recommendations: {e}")
+        return jsonify({"error" : "Unable to fetch content based recommendations"})
 
 
-def get_popular_movies():
+def get_popular_movies(limit):
 
     connection = None
     cursor = None
@@ -276,7 +293,7 @@ def get_popular_movies():
 
         recommended_information = {
             "message" : "Successfully retrieved collaborative recommendations! ",
-            "recommendations" : movies
+            "recommendations" : movies[:limit]
         }
 
         return jsonify(recommended_information)

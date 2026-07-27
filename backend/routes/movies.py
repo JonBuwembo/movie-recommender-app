@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from services.movie_service import (
+from backend.services.movie_service import (
     get_all_movies_service,
     get_movies_by_genre_service,
     get_movie_details_service,
@@ -12,13 +12,13 @@ from services.movie_service import (
     get_rating_service
 )
 
-from services.recommendation_service import (
+from backend.services.recommendation_service import (
     get_rating_metrics_service,
     get_recommendations_service,
     because_you_watched_service
 )
 
-from utils.auth_utils import get_current_user
+from backend.utils.auth_utils import get_current_user
 
 movies_bp = Blueprint('movies', __name__)
 
@@ -55,6 +55,7 @@ def handle_rating():
 
 @movies_bp.route("/api/recommendations", methods=["GET"])
 def recommendations():
+    print(">>> /api/recommendations route hit")
     return get_recommendations_service()
 
 @movies_bp.route('/api/rating/<int:movie_id>', methods=['GET'])

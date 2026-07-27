@@ -1,6 +1,6 @@
-from app import db
+from backend.app import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from models.user import Watchlist, User
+from backend.models.user import Watchlist, User
 from datetime import datetime, timezone
 
 
@@ -16,6 +16,7 @@ class Movie(db.Model):
     __tablename__ = "movies"
 
     movie_id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(1000))
     overview = db.Column(db.Text(), nullable=False)
     poster_url = db.Column(db.String(1000))
     release_year = db.Column(db.Integer)

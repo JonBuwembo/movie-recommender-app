@@ -39,6 +39,7 @@
 
 .movie-poster {
     grid-area: poster;
+    align-self: stretch;
     height: 100%;
 
     position: relative;

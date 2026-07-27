@@ -1,13 +1,13 @@
-from database.db_connection import get_db_connection
+from backend.database.db_connection import get_db_connection
 from werkzeug.exceptions import HTTPException
 
 from flask import jsonify, request
-from models.movie_model import Movie, Watchlist, Rating, WatchedMovie
-from models.content_based import get_similar_movies
+from backend.models.movie_model import Movie, Watchlist, Rating, WatchedMovie
+from backend.models.content_based import get_similar_movies
 from datetime import datetime, timezone
-from utils.auth_utils import get_current_user
-import app
-from app import db
+from backend.utils.auth_utils import get_current_user
+import backend.app
+from backend.app import db
 import math
 
 def safe_number(value, default=0):

@@ -1,6 +1,6 @@
 import pickle
 import os
-from database.db_connection import get_db_connection
+from backend.database.db_connection import get_db_connection
 import pandas as pd
 
 from sklearn.feature_extraction.text import TfidfVectorizer

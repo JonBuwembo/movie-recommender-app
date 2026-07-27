@@ -29,11 +29,12 @@ const MovieCard = ({ movie, mode = "normal", page = ""}: { movie: any; mode?: st
                             onClick={(e) => {e.stopPropagation(); removeFromWatchlist(movie.movie_id)}}
                         >
                             <Trash2 className="trash-icon" size={20} />
-                        </button>
+                    </button>
                     ):(
                         <button
                             className={`bookmark-btn ${saved? 'saved': ''}`}
-                            onClick={(e) => {e.stopPropagation(); addToWatchlist(movie.movie_id)}}
+                            onClick={(e) => {
+                                e.stopPropagation(); addToWatchlist(movie.movie_id)}}
                         >
                     
                             <Bookmark size={20} />
@@ -62,7 +63,13 @@ const MovieCard = ({ movie, mode = "normal", page = ""}: { movie: any; mode?: st
             ):(
                 <button
                     className={`bookmark-btn ${saved? 'saved': ''}`}
-                    onClick={(e) => {e.stopPropagation(); addToWatchlist(movie.movie_id)}}
+                    onClick={(e) => {e.stopPropagation(); 
+                        if (saved) {
+                            removeFromWatchlist(movie.movie_id)
+                        } else {
+                            addToWatchlist(movie.movie_id)
+                        }
+                    }}
                 >
             
                     <Bookmark size={20} />

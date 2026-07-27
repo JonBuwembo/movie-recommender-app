@@ -17,7 +17,7 @@ sys.path.append(str(backend_path))
 from database.db_connection import get_db_connection
 from recommender.svd_recommender import SVDRecommender
 from huggingface_hub import login, upload_file
-from recommender.model_store import reload_svd_model, set_model
+from recommender.model_store import reload_svd_model
 
 from scipy.sparse import (
     csr_matrix
@@ -64,6 +64,10 @@ def retrain_svd_pipeline():
         ratings["rating"] = pd.to_numeric( ratings["rating"], errors="coerce")
         ratings = ratings.dropna(subset=["rating"])
 
+        print("Ratings:", len(ratings))
+        print("Unique users:", ratings.user_id.nunique())
+        print("Unique movies:", ratings.movie_id.nunique())
+
         # mapping
         user_map = {
             user : row_id
@@ -71,6 +75,8 @@ def retrain_svd_pipeline():
                 ratings.user_id.unique()
             )
         }
+
+        print("Users in user map:", len(user_map))
 
         movie_map = {
             movie: col_id
@@ -119,16 +125,12 @@ def retrain_model():
     Trigger Model retraining
     """
 
-    print("Starting retrain ...")
-
     model = retrain_svd_pipeline()
     model.save(models_path / "svd.pkl")
+    reload_svd_model() # avoids caching old model
 
-    print("Uploading to hugging face ...")
     upload()
-    set_model(model)
 
-    print("Retrain complete ...")
 
 if __name__ == "__main__":
     retrain_model()

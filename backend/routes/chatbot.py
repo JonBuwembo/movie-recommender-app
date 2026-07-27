@@ -1,5 +1,5 @@
 from flask import Blueprint
-from services.chatbot_service import send_chatbot_response
+from backend.services.chatbot_service import send_chatbot_response
 
 
 chatbot_bp = Blueprint("chatbot", __name__)

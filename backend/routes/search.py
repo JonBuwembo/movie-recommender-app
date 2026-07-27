@@ -1,6 +1,6 @@
 from flask import Blueprint
-from services.search_service import search_movies_services
-from services.recommendation_service import get_similar_movies_service
+from backend.services.search_service import search_movies_services
+from backend.services.recommendation_service import get_similar_movies_service
 
 search_bp = Blueprint('search', __name__)
 

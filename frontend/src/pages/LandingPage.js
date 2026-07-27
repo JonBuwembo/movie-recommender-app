@@ -36,7 +36,6 @@ const LandingPage = () => {
     React.useEffect(() => {
 
         const getRecommendations = async () => {
-            console.time("recommendations");
 
             try {
              
