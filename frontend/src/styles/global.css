@@ -8,9 +8,23 @@
     box-sizing: border-box;
 }
 
+
+
+
 .layout {  
     display: grid;
-    grid-template-rows: auto 1fr auto;
+
+    background:
+        linear-gradient(
+            180deg,
+            #111827 0%,
+            #3b4f6a 100%
+        );
+    grid-template-rows: 
+        auto
+        auto 
+        1fr 
+        auto;
 
     min-height: 100vh !important; /* Desktop */
     min-height: 100dvh !important; /* Mobile devices*/

@@ -15,6 +15,7 @@ from flask import jsonify, request
 
 from backend.database.db_connection import get_db_connection
 from backend.models.movie_model import (WatchedMovie, Rating)
+from backend.models.user import User
 from backend.models.content_based import get_similar_movies
 from backend.services.movie_service import safe_number
 from backend.utils.auth_utils import ( get_current_user )
@@ -67,6 +68,8 @@ def get_recommendations_service():
                 "message" : "Unauthorized"
             }), 401
 
+        user = User.query.filter_by(user_id=user_id).first()
+
         limit = int(request.args.get("limit", 12))
         ratings = Rating.query.filter_by(user_id=user_id).all()
         rating_count = len(ratings)
@@ -75,11 +78,11 @@ def get_recommendations_service():
             return get_popular_movies(limit)
         elif rating_count < 5:
             return get_content_based_recommendation(limit)
-        elif rating_count % 5 == 0:
-            print("retraining")
-            trigger_retrain() 
+        elif rating_count >= user.last_retained_rating_count + 5:
+            trigger_retrain()
 
-            print("We are here in recommendations")
+            user.last_retained_rating_count = rating_count
+            db.session.commit()
     
         model = get_model()
         user_map = get_user_map()
@@ -87,9 +90,9 @@ def get_recommendations_service():
         movie_embeddings = get_movie_embeddings()
         reverse_movie_map = get_reverse_movie_map()
 
-        print("Current user:", user_id)
-        print("User map contains:", len(user_map), "users")
-        print("User exists?", user_id in user_map)
+        # print("Current user:", user_id)
+        # print("User map contains:", len(user_map), "users")
+        # print("User exists?", user_id in user_map)
         
         if user_id not in user_map:
             return jsonify({"Error" : "User not in user map"}), 404

@@ -174,7 +174,11 @@ const MoviesDisplay = () => {
             : displayedMovies;
 
         if (loading && displayedMovies.length === 0) {
-            return <p>Loading movies... </p> 
+            return (
+                <div className="loading-page">
+                    <div className='loading-shimmer'></div>
+                </div>
+             );
         }
 
         // 2. Search mode

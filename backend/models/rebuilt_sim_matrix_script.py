@@ -28,6 +28,14 @@ login(hugging_face_key)
 MOVIE_ID_TO_INDEX_PATH = os.path.join(ARTIFACTS_DIR, "movie_id_to_index.pkl")
 NEIGHBOR_MATRIX_PATH = os.path.join(ARTIFACTS_DIR, "neighbor_matrix.pkl")
 
+
+"""
+    Numpy --> Builds the empty matrix that will be later populated with KNN similar movies per movie.
+    Scikit-Learn --> Tfidf Vectorization (feature extraction) and Nearest Neighbor ML model
+    huggingface --> hosts our large ML files to prevent memory overload.
+"""
+
+
 def upload_artifacts():
     """
     Pushing updated model files to Hugging Face
@@ -88,14 +96,20 @@ def build_movie_metadata_model():
 
     tfidf_matrix = vectorizer.fit_transform(movies_df["text"])
 
+    # KNN uses cosine similarity ONLY when it needs to find neighbors for a movie.
+    # Much better approach than computing a "raw cosine similarity" matrix that compared
+    # every movie against every other movie: 250,000 x 250,000 = Billions of comparisons (expensive)
     nn_model = NearestNeighbors(
         metric="cosine",
         algorithm="brute",
         n_neighbors=50
     )
 
+    # KNN finds nearest neighbors on the TF-IDF vectors computed by the vectorizer above.
+    # compares vectors of numbers for every movie and checks how similar those numbers are.
     nn_model.fit(tfidf_matrix)
 
+    # Mapping
     movie_id_to_index = {}
     index_to_movie_id = {}
 
@@ -121,6 +135,8 @@ def build_movie_metadata_model():
             for i in indices[idx][1:]  # skip the first movie (just get its recs)
         ]
 
+    # KNN matrix and movie_id (database) to index mapper saved as PKL files.
+    # CACHING --> we lookup movie similarities with this matrix in application.
     with open(NEIGHBOR_MATRIX_PATH, "wb") as f:
         pickle.dump(neighbor_matrix, f)
 

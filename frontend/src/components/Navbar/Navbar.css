@@ -11,11 +11,13 @@
     font-family: 'Inter', Arial;
     text-decoration: none;
 
-  
+    position: fixed;
     flex-wrap: nowrap;
 
     scrollbar-width: none;
     width: 100%;
+
+    z-index: 30;
 }
 
 @media (max-width: 768px) {
