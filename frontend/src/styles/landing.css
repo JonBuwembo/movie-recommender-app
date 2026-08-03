@@ -97,6 +97,7 @@ button:active {
     margin-left: auto;
 }
 
+
 .display-gap {
     display: flex;
     flex-direction: column;
@@ -104,6 +105,7 @@ button:active {
     margin-top: 10px;
     gap: 2px;
 }
+
 
 .nav-search-input {
     width: 230px;
@@ -132,28 +134,91 @@ button:active {
 .carasoul-section {
     width: 100%;
     overflow: hidden;
+    margin-bottom: 25px;
 }
 
-.movie-row-container {
+.carousel-wrapper {
     width: 100%;
+    position: relative;
+    overflow: visible;
+}
 
-    overflow-x: auto;
-    overflow-y: visible;
+
+.carousel-arrow {
+    position: absolute;
+
+    top: 50%;
+    transform: translateY(-50%);
+
+    z-index: 20;
+
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+
+    border: none;
+    width: 45px;
+    height: 310px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    cursor: pointer;
+    opacity: 0.7;
+}
 
 
-    padding: 10px 0;
+.carousel-arrow.left {
+    left: 0;
+
+    background: radial-gradient(
+        ellipse at center,
+        rgba(15, 23, 42, 0.8),
+        transparent 40%
+    );
+}
+
+
+.carousel-arrow.right {
+    right: 0;
+
+    background: radial-gradient(
+        ellipse at center,
+        rgba(15, 23, 42, 0.8),
+        transparent 40%
+    );
+
+}
+
+.carousel-arrow:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(2.28);
+}
+
+
+.movie-row-container {
+    position: relative;
+    /* overflow-y: visible; */
+    overflow: hidden;
+    padding: 1 0px 0;
     scrollbar-width: none;
 }
 
 .movie-row {
     display: flex; 
-    flex-wrap: nowrap;
+    /* flex-wrap: nowrap; */
 
     width: max-content;
     gap: 1rem;
 
     padding-left: 52px;
     padding-right: 52px;
+
+    overflow: visible;
+
+    transition: transform 0.35s ease;
 
 }
 

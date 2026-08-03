@@ -1,14 +1,22 @@
 import React from 'react';
+import { useRef } from 'react';
+import { ChevronLeft, ChevronRight} from "lucide-react";
+
 import './../styles/landing.css';
 import './../styles/movies.css';
+
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
+
 import { useGenre } from '../GenreContext';
 import { useNavigate } from 'react-router-dom';
+
 import { useSearch } from '../SearchContext';
 import { useAuth } from '../AuthContext';
 import MovieCard from '../components/MovieCard/MovieCard';
+
 import config from '../config';
+
 
 const LandingPage = () => {
 
@@ -22,6 +30,20 @@ const LandingPage = () => {
     const [recommendations, setRecommendations] = React.useState([]);
     const [becauseURecs, setBecauseURecs] = React.useState([]); 
     const [movieTitle , setMovieTitle] = React.useState("");
+
+
+    const recommendationRef = useRef(null);
+    const becauseRef = useRef(null);
+
+    const scroll = (ref, direction) => {
+        if (ref.current) {
+            ref.current.scrollBy({
+                left: direction * ref.current.clientWidth,
+                behavior: "smooth"
+            });
+        }
+        
+    }
 
 
     const handleSearchSubmit = (event) => {
@@ -125,11 +147,17 @@ const LandingPage = () => {
                     <div className='display-gap'>
                         <h2 className='landing-subheader'>Recommended For You </h2>
 
-                        <div className="movie-row-container">
-                            <div className='movie-row'>
-                                {recommendations.map(movie => (
-                                    <MovieCard key={movie.movie_id} movie={movie} /> ))}
-                            </div>
+                        <div className="carousel-wrapper">
+                            <button onClick={() => scroll(recommendationRef, -1)} className="carousel-arrow left"> <ChevronLeft size={30} /> </button>
+
+                                <div className="movie-row-container" ref={recommendationRef}>
+                                    <div className='movie-row'>
+                                        {recommendations.map(movie => (
+                                            <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                                    </div>
+                                </div>
+                            
+                            <button onClick={() => scroll(recommendationRef, 1)}className='carousel-arrow right'> <ChevronRight size={30} /></button>
                         </div>
                     </div>
 
@@ -138,11 +166,17 @@ const LandingPage = () => {
                             <div className='display-gap'>
                                 <h2 className='landing-subheader'>Because you watched {movieTitle} </h2>
 
-                                <div className="movie-row-container">
-                                    <div className='movie-row'>
-                                        {becauseURecs.map(movie => (
-                                            <MovieCard key={movie.movie_id} movie={movie} /> ))}
-                                    </div>
+                                <div className="carousel-wrapper">
+                                    <button onClick={() => scroll(becauseRef, -1)} className="carousel-arrow left"> <ChevronLeft size={30} /> </button>
+
+                                        <div className="movie-row-container" ref={becauseRef}>
+                                            <div className='movie-row'>
+                                                {becauseURecs.map(movie => (
+                                                    <MovieCard key={movie.movie_id} movie={movie} /> ))}
+                                            </div>
+                                        </div>
+
+                                    <button onClick={() => scroll(becauseRef, 1)} className='carousel-arrow right'> <ChevronRight size={30} /></button>
                                 </div>
                             </div>
                         </>

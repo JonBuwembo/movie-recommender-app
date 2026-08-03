@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 import numpy as np
 
-from database.db_connection import get_db_connection
+from backend.database.db_connection import get_db_connection
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 from huggingface_hub import upload_file, login

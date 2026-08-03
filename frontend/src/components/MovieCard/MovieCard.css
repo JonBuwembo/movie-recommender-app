@@ -82,12 +82,12 @@
     background: rgba(0, 0, 0, 0.9);
 }
 
-.movie-card:hover {
+.movie-card:hover, .bookmark-btn {
     transform: 
-        translateY(-5px)
-        scale(1.05);
+        translateY(4px)
+        scale(1.25);
 
-    z-index: 25;
+    z-index: 5;
 }
 
 
