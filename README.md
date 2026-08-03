@@ -144,8 +144,9 @@ npm start
 - [x] Collaborative filtering
 - [x] Responsive mobile interface
 - [x] Recommendation explanations
+- [x] Docker support
 - [ ] Redis caching
-- [ ] Docker support
+
 - [ ] Admin dashboard
 
 ## License
